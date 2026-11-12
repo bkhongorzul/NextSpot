@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Extra declarations merged in ONLY for the "pleos" build variant. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Runs on Android Automotive (Pleos Connect) -->
+    <uses-feature android:name="android.hardware.type.automotive" android:required="true" />
+
+    <!-- Pleos Vehicle SDK: read door state (Door) and drive data (Gear) -->
+    <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
+
+    <!-- Android Automotive standard property PARKING_BRAKE_ON -->
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+
+    <!-- Pleos NaviHelper SDK: set a destination -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+
+    <application>
+        <activity android:name=".MainActivity">
+            <!-- Allows the screen to stay usable while the car is moving -->
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
+    </application>
+</manifest>
