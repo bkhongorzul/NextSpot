@@ -7,7 +7,7 @@ import com.nextspot.app.data.SpotStatus
 
 /**
  * Car A's departure logic (the core idea):
- *  1. Door opened/closed AND navigation set  -> post spot as LIKELY (heads-up)
+ *  1. Driver in seat (door opened/closed OR seatbelt buckled) AND navigation set -> post spot as LIKELY
  *  2. Parking brake released                 -> CONFIRMED
  *  3. No confirm within WITHDRAW_AFTER_MS     -> WITHDRAWN (the driver didn't actually leave)
  */
@@ -44,6 +44,12 @@ class DepartureDetector(
     override fun onDoorOpenedAndClosed() {
         doorSeen = true
         onLog("Door opened and closed")
+        maybePostLikely()
+    }
+
+    override fun onSeatbeltBuckled() {
+        doorSeen = true
+        onLog("Seatbelt buckled")
         maybePostLikely()
     }
 

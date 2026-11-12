@@ -8,12 +8,13 @@ import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
 
 /**
- * Voice output using the device's text-to-speech engine.
+ * Fallback voice output using the device's text-to-speech engine.
  * Works on any emulator. Later this can be swapped for the Pleos TextToSpeech SDK.
  * `say(text) { ... }` runs the callback when the sentence has finished playing,
  * so the app can start listening for the driver's answer only after it stops talking.
  */
-class Speaker(context: Context) : TextToSpeech.OnInitListener {
+class AndroidSpeaker(context: Context) : Speaker, TextToSpeech.OnInitListener {
+    override val label = "Android TTS"
     private var ready = false
     private var pending: Pair<String, (() -> Unit)?>? = null
     private val main = Handler(Looper.getMainLooper())
@@ -45,11 +46,11 @@ class Speaker(context: Context) : TextToSpeech.OnInitListener {
     }
 
     /** Language of the voice ("ko" or "en"). */
-    fun setLanguage(code: String) {
+    override fun setLanguage(code: String) {
         if (ready) tts.setLanguage(if (code == "en") Locale.ENGLISH else Locale.KOREAN)
     }
 
-    fun say(text: String, onDone: (() -> Unit)? = null) {
+    override fun say(text: String, onDone: (() -> Unit)?) {
         if (!ready) {
             pending = text to onDone
             return
@@ -59,7 +60,7 @@ class Speaker(context: Context) : TextToSpeech.OnInitListener {
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, id)
     }
 
-    fun shutdown() {
+    override fun shutdown() {
         tts.stop()
         tts.shutdown()
     }

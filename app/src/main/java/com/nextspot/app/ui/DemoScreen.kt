@@ -26,7 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +84,7 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val e = remember { DemoEngine(context, speaker, scope) }
+    var showSdk by remember { mutableStateOf(false) }
     DisposableEffect(Unit) { onDispose { e.dispose() } }
 
     // Ask once for the microphone (for the "네" voice answer). Buttons still work without it.
@@ -127,6 +130,7 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
         }
         Spacer(Modifier.height(6.dp))
         EventLog(e)
+        if (showSdk) { Spacer(Modifier.height(6.dp)); SdkInfo(e) }
         Spacer(Modifier.height(8.dp))
 
         // Scenario controls
@@ -146,6 +150,7 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
             Small("A 내비", Modifier.weight(1f)) { e.onNavigationSet() }
             Small("A 브레이크", Modifier.weight(1.2f)) { e.onParkingBrakeReleased() }
             Small("B 주차", Modifier.weight(1f)) { e.parkCarB() }
+            Small("SDK", Modifier.weight(0.8f)) { showSdk = !showSdk }
             Small("메뉴", Modifier.weight(0.9f)) { onBack() }
         }
     }

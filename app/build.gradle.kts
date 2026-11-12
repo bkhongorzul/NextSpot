@@ -67,6 +67,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     // Pleos Connect SDK (only in the "pleos" variant)
-    "pleosImplementation"("ai.pleos.playground:Vehicle:2.0.3")
-    "pleosImplementation"("ai.pleos.playground:NaviHelper:2.0.3")
+    "pleosImplementation"("ai.pleos.playground:Vehicle:2.3.2")
+    "pleosImplementation"("ai.pleos.playground:NaviHelper:3.0.5")
+    "pleosImplementation"("ai.pleos.playground:TextToSpeech:3.3.1")
+    "pleosImplementation"("ai.pleos.playground:SpeechToText:3.3.1")
+    "pleosImplementation"("ai.pleos.playground:FusedLocation:1.1.3")
 }

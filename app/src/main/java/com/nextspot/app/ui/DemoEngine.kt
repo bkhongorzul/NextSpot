@@ -11,7 +11,7 @@ import com.nextspot.app.car.CarSignals
 import com.nextspot.app.car.DepartureDetector
 import com.nextspot.app.car.Platform
 import com.nextspot.app.car.Speaker
-import com.nextspot.app.car.VoiceAnswer
+import com.nextspot.app.car.VoiceInput
 import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
@@ -46,10 +46,12 @@ class DemoEngine(
     private val repo = SpotRepository()
     private val signals = Platform.carSignals(context)   // real Pleos signals in the "pleos" build
     private val navigator = Platform.navigator(context)
-    val voice = VoiceAnswer(context)
+    private val carContext = Platform.carContext(context)   // Car B: near destination (Pleos NaviHelper)
+    val voice: VoiceInput = Platform.voiceInput(context)
 
     // ---- state the screen reads ----
     var door by mutableStateOf(false); private set
+    var belt by mutableStateOf(false); private set
     var nav by mutableStateOf(false); private set
     var brake by mutableStateOf(false); private set
     var searching by mutableStateOf(false); private set
@@ -63,6 +65,16 @@ class DemoEngine(
     var autoPlaying by mutableStateOf(false); private set
     val log = mutableStateListOf<LogItem>()
     val signalLabel: String get() = signals.label
+
+    /** Which SDK powers each part (shown on screen so judges can see the Pleos SDK use). */
+    val sdkLines: List<Pair<String, String>>
+        get() = listOf(
+            "Car A 신호" to signals.label,
+            "Car B 목적지 근처" to carContext.label,
+            "음성 안내" to speaker.label,
+            "음성 대답" to voice.label,
+            "자리 공유" to "Firebase Firestore",
+        )
 
     private var runStart = System.currentTimeMillis()
     private var spotReg: ListenerRegistration? = null
@@ -96,14 +108,30 @@ class DemoEngine(
     init {
         signals.start(this)
         navigator.start()
-        add("시스템", "준비 완료 · 신호: ${signals.label}")
+        carContext.start(
+            onNearDestination = { m ->
+                add("Car B", "📍 목적지 ${m}m 전 (Pleos NaviHelper) → 자동 탐색")
+                startSearch()
+            },
+            onPosition = { lat, lng -> lastPosition = "%.5f, %.5f".format(lat, lng) },
+        )
+        add("시스템", "준비 완료 · ${Platform.NAME}")
     }
+
+    /** Car B's real position from Pleos (shown in the log when it arrives). */
+    var lastPosition by mutableStateOf<String?>(null); private set
 
     // ---------------- Car A: signals ----------------
     override fun onDoorOpenedAndClosed() {
         door = true
         add("Car A", "🚪 문 열고 닫음 (차 신호)")
         detector.onDoorOpenedAndClosed()
+    }
+
+    override fun onSeatbeltBuckled() {
+        belt = true
+        add("Car A", "💺 운전석 안전벨트 착용 (차 신호)")
+        detector.onSeatbeltBuckled()
     }
 
     override fun onNavigationSet() {
@@ -201,9 +229,9 @@ class DemoEngine(
             onAnswer = { answer, heard ->
                 listening = false
                 when (answer) {
-                    VoiceAnswer.Answer.YES -> { add("Car B", "🗣 운전자: \"$heard\" → 수락"); answerYes() }
-                    VoiceAnswer.Answer.NO -> { add("Car B", "🗣 운전자: \"$heard\" → 거절"); answerNo() }
-                    VoiceAnswer.Answer.UNKNOWN -> add("Car B", "🎤 못 알아들었어요 → 다시 말하거나 버튼")
+                    VoiceInput.Answer.YES -> { add("Car B", "🗣 운전자: \"$heard\" → 수락"); answerYes() }
+                    VoiceInput.Answer.NO -> { add("Car B", "🗣 운전자: \"$heard\" → 거절"); answerNo() }
+                    VoiceInput.Answer.UNKNOWN -> add("Car B", "🎤 못 알아들었어요 → 다시 말하거나 버튼")
                 }
             },
             onUnavailable = { listening = false },
@@ -249,7 +277,7 @@ class DemoEngine(
         detector.reset()
         spotReg?.remove(); openReg?.remove()
         spot = null; lastSpotStatus = null
-        door = false; nav = false; brake = false
+        door = false; belt = false; nav = false; brake = false
         searching = false; asking = false; listening = false; accepted = false; parked = false
         offerMeters = null
         log.clear()
@@ -267,6 +295,7 @@ class DemoEngine(
             autoJob = scope.launch {
                 delay(1200); startSearch()
                 delay(2500); onDoorOpenedAndClosed()
+                delay(1200); onSeatbeltBuckled()
                 delay(1500); onNavigationSet()
                 waitUntil(15_000) { accepted }
                 delay(2500)
@@ -293,7 +322,7 @@ class DemoEngine(
     fun dispose() {
         autoJob?.cancel()
         voice.stop()
-        signals.stop(); navigator.stop()
+        signals.stop(); navigator.stop(); carContext.stop()
         spotReg?.remove(); openReg?.remove(); creditsReg.remove()
     }
 

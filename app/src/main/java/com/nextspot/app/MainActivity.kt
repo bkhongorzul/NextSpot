@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.nextspot.app.car.Platform
 import com.nextspot.app.car.Speaker
 import com.nextspot.app.ui.CarAScreen
 import com.nextspot.app.ui.CarBScreen
@@ -21,7 +22,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        speaker = Speaker(this)
+        speaker = Platform.speaker(this)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface {

@@ -33,9 +33,10 @@ fun SignalPanel(e: DemoEngine) {
     val st = e.spot?.status
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Chip("🚪 문", e.door, Modifier.weight(1f))
+        Chip("💺 벨트", e.belt, Modifier.weight(1f))
         Chip("🧭 내비", e.nav, Modifier.weight(1f))
-        Chip("🅿️ 브레이크", e.brake, Modifier.weight(1f))
-        Chip("📡 클라우드", st != null, Modifier.weight(1f))
+        Chip("🅿️ 브레이크", e.brake, Modifier.weight(1.2f))
+        Chip("📡 클라우드", st != null, Modifier.weight(1.2f))
         Chip("🚗 Car B", e.offerMeters != null, Modifier.weight(1f))
     }
 }
@@ -105,6 +106,19 @@ fun VoiceOfferCard(e: DemoEngine) {
             OutlinedButton(onClick = { e.answerNo() }, modifier = Modifier.weight(1f)) { Text("아니요") }
             OutlinedButton(onClick = { e.listenForAnswer() }, modifier = Modifier.weight(1f)) {
                 Text(if (e.listening) "🎤 듣는 중" else "🎤 말하기")
+            }
+        }
+    }
+}
+
+/** Small list: which SDK powers each part (Pleos in the pleos build). */
+@Composable
+fun SdkInfo(e: DemoEngine) {
+    Column(Modifier.fillMaxWidth().background(Color(0xFF15181D), RoundedCornerShape(10.dp)).padding(8.dp)) {
+        e.sdkLines.forEach { (part, sdk) ->
+            Row {
+                Text(part, fontSize = 11.sp, color = Color(0xFF888780), modifier = Modifier.width(100.dp))
+                Text(sdk, fontSize = 11.sp, color = if (sdk.contains("Pleos")) Color(0xFF5DCAA5) else Color(0xFFD3D1C7))
             }
         }
     }
