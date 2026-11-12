@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import com.nextspot.app.car.Speaker
 import com.nextspot.app.ui.CarAScreen
 import com.nextspot.app.ui.CarBScreen
+import com.nextspot.app.ui.DemoScreen
 import com.nextspot.app.ui.RoleScreen
 
 class MainActivity : ComponentActivity() {
@@ -24,9 +25,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface {
-                    var role by remember { mutableStateOf<String?>(null) }
+                    var role by remember { mutableStateOf<String?>("demo") }
                     when (role) {
                         null -> RoleScreen(onPick = { role = it })
+                        "demo" -> DemoScreen(speaker = speaker, onBack = { role = null })
                         "A" -> CarAScreen(speaker = speaker, onBack = { role = null })
                         else -> CarBScreen(speaker = speaker, onBack = { role = null })
                     }

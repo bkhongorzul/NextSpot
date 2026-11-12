@@ -28,6 +28,10 @@ fun RoleScreen(onPick: (String) -> Unit) {
         Text("NextSpot", fontSize = 40.sp, fontWeight = FontWeight.Bold)
         Text("주차 자리 핸드오버 · Parking Handover", fontSize = 18.sp)
         Spacer(Modifier.height(32.dp))
+        Button(onClick = { onPick("demo") }, modifier = Modifier.fillMaxWidth().height(72.dp)) {
+            Text("▶ 한 화면 데모 · One-screen demo", fontSize = 20.sp)
+        }
+        Spacer(Modifier.height(16.dp))
         Button(onClick = { onPick("A") }, modifier = Modifier.fillMaxWidth().height(72.dp)) {
             Text("차 A · 떠나는 차 (Car A, leaving)", fontSize = 20.sp)
         }
