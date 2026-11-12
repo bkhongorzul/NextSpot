@@ -133,6 +133,22 @@ class SpotRepository {
             .set(mapOf("count" to FieldValue.increment(1)), SetOptions.merge())
     }
 
+    /** Demo reset: close every open or in-progress spot left in this group from earlier runs. */
+    fun clearGroup(group: String, onDone: () -> Unit = {}) {
+        spots.whereEqualTo("group", group).get()
+            .addOnSuccessListener { snap ->
+                val batch = db.batch()
+                snap.documents.forEach { d ->
+                    val st = d.getString("status")
+                    if (st != SpotStatus.TAKEN && st != SpotStatus.WITHDRAWN) {
+                        batch.update(d.reference, mapOf("status" to SpotStatus.WITHDRAWN))
+                    }
+                }
+                batch.commit().addOnCompleteListener { onDone() }
+            }
+            .addOnFailureListener { onDone() }
+    }
+
     fun listenCredits(carId: String, onChange: (Long) -> Unit): ListenerRegistration =
         credits.document(carId).addSnapshotListener { snap, _ ->
             onChange(snap?.getLong("count") ?: 0L)

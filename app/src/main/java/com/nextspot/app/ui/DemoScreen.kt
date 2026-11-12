@@ -1,8 +1,11 @@
 package com.nextspot.app.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,12 +23,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -33,84 +36,64 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nextspot.app.car.Speaker
-import kotlinx.coroutines.delay
+import com.nextspot.app.ui.DemoEngine.Phase
 
 /**
- * One-screen demo: a parking lot with Car A (leaving) and Car B (searching).
- * Each step = one real driving action that the Pleos car detects by itself.
+ * One-screen demo. Everything here is driven by DemoEngine, which runs the real logic
+ * (car signals -> DepartureDetector -> Firebase -> Car B). The screen only draws the state.
+ * Design / text: teammate. Logic: DemoEngine.kt.
  */
-private data class Step(
-    val title: String,
-    val caption: String,
-    val signal: String,
-    val voice: String?,
-    val spot: SpotLook,
-    val showRoute: Boolean,
-    val bX: Float, val bY: Float,      // Car B position (0..1 of canvas)
-    val aGone: Float,                  // 0 = Car A parked, 1 = Car A drove away
-    val credits: Int,
-)
-
 private enum class SpotLook { NONE, LIKELY, RESERVED, CONFIRMED, TAKEN, CANCELLED }
 
-private val NORMAL = listOf(
-    Step("1 · 자리 찾는 중 · Searching",
-        "Car B는 몇 분째 빈자리를 찾아 돌고 있어요. 주차장은 꽉 찬 것처럼 보여요.\nCar B has been circling for minutes. The lot looks full.",
-        "센서 없는 주차장 · No sensors in this lot", null,
-        SpotLook.NONE, false, 0.08f, 0.72f, 0f, 0),
-    Step("2 · 곧 나갈 차 감지 · Leaving soon",
-        "Car A 운전자가 차에 타서 문을 닫고 목적지를 설정했어요. 버튼은 누르지 않아요.\nCar A's driver closes the door and sets a destination. No button needed.",
-        "Pleos 신호: 문 + 내비 목적지 → 곧 빌 가능성 (노란색)", null,
-        SpotLook.LIKELY, false, 0.22f, 0.72f, 0f, 0),
-    Step("3 · Car B에게 음성 제안 · Voice offer",
-        "Car B에 음성 안내: \"150미터 앞에 자리가 곧 납니다. 갈까요?\" 운전자: \"네\".\nCar B hears the offer and just says \"yes\".",
-        "자리 예약 → 내비가 그 자리로 경로 안내", "150미터 앞에 자리가 곧 납니다. 갈까요?",
-        SpotLook.RESERVED, true, 0.40f, 0.72f, 0f, 0),
-    Step("4 · 출발 확정 · Confirmed",
-        "Car A가 주차 브레이크를 풀고 출발해요. 이제 자리가 확실히 비어요.\nCar A releases the parking brake and drives off.",
-        "Pleos 신호: 주차 브레이크 해제 → 확정 (초록색)", "다음 차가 이 자리로 오고 있어요.",
-        SpotLook.CONFIRMED, true, 0.55f, 0.72f, 1f, 0),
-    Step("5 · 핸드오버 완료 · Handed over",
-        "Car B가 바로 그 자리에 주차했어요. Car A는 자리를 넘겨줘서 크레딧 1점을 받아요.\nCar B parks in the exact spot. Car A earns +1 credit.",
-        "주차 완료 → 크레딧 +1", "자리를 넘겨드렸어요. 크레딧 1점이 적립됐어요.",
-        SpotLook.TAKEN, false, 0.585f, 0.22f, 1f, 1),
+private data class View(
+    val title: String, val caption: String,
+    val look: SpotLook, val route: Boolean,
+    val bX: Float, val bY: Float, val aGone: Float,
 )
 
-private val CANCEL = listOf(
-    NORMAL[0], NORMAL[1], NORMAL[2],
-    Step("4 · 출발 취소 · Driver stays",
-        "Car A 운전자가 출발하지 않았어요 (45초 동안 주차 브레이크 해제 없음). 제안을 자동으로 철회해요.\nCar A never leaves, so the offer is withdrawn automatically.",
-        "확정 신호 없음 → 철회 → Car B는 다른 자리 탐색", "자리가 취소됐어요. 다른 자리를 찾을게요.",
-        SpotLook.CANCELLED, false, 0.75f, 0.72f, 0f, 0),
-)
+private fun viewFor(p: Phase, meters: Int?): View = when (p) {
+    Phase.IDLE -> View("대기 중", "▶ 시나리오 재생을 누르거나, 아래 버튼으로 차 신호를 직접 보내 보세요.",
+        SpotLook.NONE, false, 0.08f, 0.72f, 0f)
+    Phase.SEARCHING -> View("1 · Car B 자리 찾는 중", "Car B가 근처 빈자리를 기다리고 있어요. 주차장은 꽉 찬 것처럼 보여요.",
+        SpotLook.NONE, false, 0.15f, 0.72f, 0f)
+    Phase.LIKELY -> View("2 · 곧 나갈 차 감지", "Car A가 문을 닫고 목적지를 설정했어요. 앱이 클라우드에 \"곧 빌 자리\"로 등록했어요.",
+        SpotLook.LIKELY, false, 0.22f, 0.72f, 0f)
+    Phase.OFFER -> View("3 · Car B에게 음성 제안", "클라우드에서 자리를 받았어요. ${meters ?: "-"}m 앞. 운전자는 \"네\"라고 말하면 돼요.",
+        SpotLook.LIKELY, false, 0.30f, 0.72f, 0f)
+    Phase.RESERVED -> View("3 · Car B에게 예약됨", "다른 차는 이 자리를 받을 수 없어요. 내비가 그 자리로 안내 중이에요.",
+        SpotLook.RESERVED, true, 0.40f, 0.72f, 0f)
+    Phase.CONFIRMED -> View("4 · 출발 확정", "Car A가 주차 브레이크를 풀고 출발했어요. 이제 자리가 확실히 비어요.",
+        SpotLook.CONFIRMED, true, 0.55f, 0.72f, 1f)
+    Phase.TAKEN -> View("5 · 핸드오버 완료", "Car B가 바로 그 자리에 주차했어요. Car A는 크레딧 1점을 받아요.",
+        SpotLook.TAKEN, false, 0.585f, 0.22f, 1f)
+    Phase.WITHDRAWN -> View("출발 취소 → 제안 철회", "Car A가 출발하지 않았어요. 제안을 자동으로 철회하고 Car B는 다른 자리를 찾아요.",
+        SpotLook.CANCELLED, false, 0.75f, 0.72f, 0f)
+}
 
 @Composable
 fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
-    var cancelMode by remember { mutableStateOf(false) }
-    val steps = if (cancelMode) CANCEL else NORMAL
-    var i by remember { mutableIntStateOf(0) }
-    var playing by remember { mutableStateOf(false) }
-    val s = steps[i.coerceIn(0, steps.lastIndex)]
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val e = remember { DemoEngine(context, speaker, scope) }
+    DisposableEffect(Unit) { onDispose { e.dispose() } }
 
-    LaunchedEffect(i, cancelMode) { s.voice?.let { speaker.say(it) } }
-    LaunchedEffect(playing) {
-        while (playing) {
-            delay(5500)
-            if (i < steps.lastIndex) i++ else playing = false
-        }
-    }
+    // Ask once for the microphone (for the "네" voice answer). Buttons still work without it.
+    val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(Unit) { micLauncher.launch(Manifest.permission.RECORD_AUDIO) }
 
-    val bx by animateFloatAsState(s.bX, tween(1400), label = "bx")
-    val by by animateFloatAsState(s.bY, tween(1400), label = "by")
-    val aGone by animateFloatAsState(s.aGone, tween(1400), label = "a")
+    val v = viewFor(e.phase, e.offerMeters)
+    val bx by animateFloatAsState(v.bX, tween(1400), label = "bx")
+    val by by animateFloatAsState(v.bY, tween(1400), label = "by")
+    val aGone by animateFloatAsState(v.aGone, tween(1400), label = "a")
     val spotColor by animateColorAsState(
-        when (s.spot) {
+        when (v.look) {
             SpotLook.NONE -> Color.Transparent
             SpotLook.LIKELY, SpotLook.RESERVED -> Color(0xFFEF9F27)
             SpotLook.CONFIRMED, SpotLook.TAKEN -> Color(0xFF1D9E75)
@@ -118,49 +101,62 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
         }, tween(600), label = "spot"
     )
 
-    Column(Modifier.fillMaxSize().background(Color(0xFF111418)).padding(16.dp)) {
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("NextSpot", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    Column(Modifier.fillMaxSize().background(Color(0xFF111418)).padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("NextSpot", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(Modifier.weight(1f))
-            Text("Car A 크레딧: ${s.credits}", fontSize = 16.sp, color = Color(0xFF9FE1CB))
-        }
-        Spacer(Modifier.height(8.dp))
-
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            Canvas(Modifier.fillMaxSize()) {
-                drawLot(spotColor, s.spot, s.showRoute, bx, by, aGone)
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        Column(
-            Modifier.fillMaxWidth().background(Color(0xFF1C2128), RoundedCornerShape(12.dp)).padding(14.dp)
-        ) {
-            Text(s.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(Modifier.height(6.dp))
-            Text(s.caption, fontSize = 15.sp, color = Color(0xFFD3D1C7), lineHeight = 21.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(s.signal, fontSize = 13.sp, color = Color(0xFFEF9F27))
-        }
-
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = { playing = false; if (i > 0) i-- }, modifier = Modifier.weight(1f)) { Text("◀ 이전") }
-            Button(
-                onClick = { if (i >= steps.lastIndex) i = 0; playing = !playing },
-                modifier = Modifier.weight(1.4f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D9E75)),
-            ) { Text(if (playing) "■ 정지" else "▶ 시나리오 재생", fontSize = 16.sp) }
-            OutlinedButton(onClick = { playing = false; if (i < steps.lastIndex) i++ }, modifier = Modifier.weight(1f)) { Text("다음 ▶") }
+            Text("Car A 크레딧 ${e.credits}", fontSize = 14.sp, color = Color(0xFF9FE1CB))
         }
         Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = { playing = false; i = 0; cancelMode = !cancelMode }, modifier = Modifier.weight(1f)) {
-                Text(if (cancelMode) "정상 시나리오로" else "취소 시나리오 보기")
+        SignalPanel(e)
+        Spacer(Modifier.height(6.dp))
+
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            Canvas(Modifier.fillMaxSize()) { drawLot(spotColor, v.look, v.route, bx, by, aGone) }
+        }
+        Spacer(Modifier.height(6.dp))
+
+        if (e.phase == Phase.OFFER) {
+            VoiceOfferCard(e)
+        } else {
+            Column(Modifier.fillMaxWidth().background(Color(0xFF1C2128), RoundedCornerShape(12.dp)).padding(12.dp)) {
+                Text(v.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(Modifier.height(4.dp))
+                Text(v.caption, fontSize = 14.sp, color = Color(0xFFD3D1C7), lineHeight = 20.sp)
             }
-            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("메뉴") }
+        }
+        Spacer(Modifier.height(6.dp))
+        EventLog(e)
+        Spacer(Modifier.height(8.dp))
+
+        // Scenario controls
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { if (e.autoPlaying) e.stopAutoPlay() else e.playScenario(cancelCase = false) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D9E75)),
+                modifier = Modifier.weight(1.3f),
+            ) { Text(if (e.autoPlaying) "■ 정지" else "▶ 시나리오 재생") }
+            OutlinedButton(onClick = { e.playScenario(cancelCase = true) }, modifier = Modifier.weight(1f)) { Text("취소 시나리오") }
+            OutlinedButton(onClick = { e.reset() }, modifier = Modifier.weight(0.8f)) { Text("초기화") }
+        }
+        // Manual car signals (stand in for the real Pleos signals)
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+            Small("B 탐색", Modifier.weight(1f)) { e.startSearch() }
+            Small("A 문", Modifier.weight(1f)) { e.onDoorOpenedAndClosed() }
+            Small("A 내비", Modifier.weight(1f)) { e.onNavigationSet() }
+            Small("A 브레이크", Modifier.weight(1.2f)) { e.onParkingBrakeReleased() }
+            Small("B 주차", Modifier.weight(1f)) { e.parkCarB() }
+            Small("메뉴", Modifier.weight(0.9f)) { onBack() }
         }
     }
+}
+
+@Composable
+private fun Small(label: String, modifier: Modifier, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick, modifier = modifier,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+    ) { Text(label, fontSize = 11.sp, maxLines = 1) }
 }
 
 private fun DrawScope.drawLot(
