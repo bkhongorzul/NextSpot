@@ -36,6 +36,7 @@ object NsPaths {
     const val PAUSE = "M6 5h4v14H6zM14 5h4v14h-4z"
     const val RESET = "M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"
     const val MIC_STEM = "M5 11a7 7 0 0 0 14 0M12 18v3"
+    const val ARROW = "M5 12h14M13 6l6 6-6 6"
     const val BACK = "M15 5l-7 7 7 7"
     const val CHEVRON_DOWN = "M6 9l6 6 6-6"
     const val CHEVRON_UP = "M6 15l6-6 6 6"

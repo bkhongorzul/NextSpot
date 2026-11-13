@@ -26,7 +26,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,7 +43,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -97,7 +104,7 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                 )
                 Text(caption, style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2)
                 // the core idea: the car itself sends these signals (no equipment in the lot)
-                if (ui.phase == Phase.SEARCHING || ui.phase == Phase.LIKELY || ui.phase == Phase.CONFIRMED) {
+                if (ui.phase == Phase.SEARCHING || ui.phase == Phase.LIKELY || ui.phase == Phase.RESERVED || ui.phase == Phase.CONFIRMED) {
                     CarSignalList(ui, Modifier.padding(top = 8.dp))
                 }
             }
@@ -105,26 +112,81 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
     }
 }
 
-/** What the leaving car has sent so far. Each line turns on when its signal arrives. */
+/**
+ * What the leaving car's own signals did, in the two steps of DepartureDetector:
+ *  1. seated + destination set  ->  posted as "opening soon"
+ *  2. parking brake released     ->  spot confirmed
+ * Lines turn on one after another, at least [REVEAL_GAP_MS] apart, so each signal can be read
+ * even when the demo sends them in quick succession.
+ */
+private const val REVEAL_GAP_MS = 700L
+
 @Composable
 private fun CarSignalList(ui: DemoUi, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.sigs_title), style = NsType.small, color = NsColors.text2)
-        SignalLine(stringResource(R.string.sigs_seat), ui.door || ui.belt)
-        SignalLine(stringResource(R.string.sigs_nav), ui.nav)
-        SignalLine(stringResource(R.string.sigs_brake), ui.brake)
+    val p = ui.phase
+    val target = listOf(
+        ui.door || ui.belt,
+        ui.nav,
+        p == Phase.LIKELY || p == Phase.OFFER || p == Phase.RESERVED || p == Phase.CONFIRMED || p == Phase.TAKEN,
+        ui.brake,
+        p == Phase.CONFIRMED || p == Phase.TAKEN,
+    )
+    val shown = remember { mutableStateListOf(*target.toTypedArray()) }
+    var lastReveal by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(target) {
+        for (k in target.indices) if (!target[k] && shown[k]) shown[k] = false   // a new run: back to empty
+        for (k in target.indices) {
+            if (target[k] && !shown[k]) {
+                val wait = REVEAL_GAP_MS - (System.currentTimeMillis() - lastReveal)
+                if (wait > 0) delay(wait)
+                shown[k] = true
+                lastReveal = System.currentTimeMillis()
+            }
+        }
+    }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SignalGroup(stringResource(R.string.sigs_group1)) {
+            SignalLine(stringResource(R.string.sigs_seat), shown[0])
+            SignalLine(stringResource(R.string.sigs_nav), shown[1])
+            SignalResult(stringResource(R.string.sigs_result1), shown[2])
+        }
+        SignalGroup(stringResource(R.string.sigs_group2)) {
+            SignalLine(stringResource(R.string.sigs_brake), shown[3])
+            SignalResult(stringResource(R.string.sigs_result2), shown[4])
+        }
+    }
+}
+
+@Composable
+private fun SignalGroup(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(title, style = NsType.small, color = NsColors.text2)
+        content()
     }
 }
 
 @Composable
 private fun SignalLine(label: String, on: Boolean) {
-    val bg by animateColorAsState(if (on) NsColors.main else NsColors.surface, tween(200), label = "sig")
+    val bg by animateColorAsState(if (on) NsColors.main else NsColors.surface, tween(250), label = "sig")
+    val pop by animateFloatAsState(if (on) 1f else 0.4f, spring(dampingRatio = 0.5f, stiffness = 400f), label = "pop")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(28.dp).clip(NsShape.mark).background(bg), contentAlignment = Alignment.Center) {
-            if (on) NsIcon(NsPaths.CHECK, NsColors.onMain, 20.dp, strokeWidth = 3f, square = true)
+            if (on) NsIcon(NsPaths.CHECK, NsColors.onMain, 20.dp, Modifier.graphicsLayer { scaleX = pop; scaleY = pop }, strokeWidth = 3f, square = true)
         }
         Spacer(Modifier.width(14.dp))
         Text(label, style = if (on) NsType.bodyBold else NsType.body, color = if (on) NsColors.text else NsColors.text3, maxLines = 1)
+    }
+}
+
+/** The outcome of a group: an arrow and one line, bright when it has happened. */
+@Composable
+private fun SignalResult(label: String, on: Boolean) {
+    val c by animateColorAsState(if (on) NsColors.main else NsColors.text3, tween(250), label = "res")
+    Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.width(4.dp))
+        NsIcon(NsPaths.ARROW, c, 20.dp, strokeWidth = 2.4f, square = true)
+        Spacer(Modifier.width(18.dp))
+        Text(label, style = NsType.bodyBold, color = c, maxLines = 1)
     }
 }
 

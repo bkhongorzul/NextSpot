@@ -99,13 +99,16 @@
     <string name="log_thanks">음성 안내 “자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">다음 차에게 자리를 넘겼어요</string>
+    <string name="closing_done_title">자리 넘김 완료</string>
     <string name="closing_replay">다시 보기</string>
     <string name="closing_home">시작 화면으로</string>
     <string name="closing_cancel_body">나가는 차가 떠나지 않아 제안을 거뒀어요.</string>
-    <string name="sigs_title">나가는 차가 보내는 신호</string>
     <string name="sigs_seat">운전석 착석 (문, 안전벨트)</string>
     <string name="sigs_nav">내비 목적지 설정</string>
     <string name="sigs_brake">주차 브레이크 해제</string>
     <string name="closing_done_body">자리를 비워 준 차에 포인트 1점이 쌓였어요.</string>
+    <string name="sigs_group1">출발 예고</string>
+    <string name="sigs_group2">출발 확정</string>
+    <string name="sigs_result1">곧 빌 자리로 등록</string>
+    <string name="sigs_result2">자리 확정</string>
 </resources>

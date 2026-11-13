@@ -95,13 +95,16 @@
     <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">Spot handed to the next car</string>
+    <string name="closing_done_title">Handover complete</string>
     <string name="closing_replay">Watch again</string>
     <string name="closing_home">Back to start</string>
     <string name="closing_cancel_body">The leaving car stayed, so the offer was withdrawn.</string>
-    <string name="sigs_title">Signals from the leaving car</string>
     <string name="sigs_seat">Driver seated (door, seatbelt)</string>
     <string name="sigs_nav">Destination set</string>
     <string name="sigs_brake">Parking brake released</string>
     <string name="closing_done_body">The car that left earned 1 point.</string>
+    <string name="sigs_group1">Departure expected</string>
+    <string name="sigs_group2">Departure confirmed</string>
+    <string name="sigs_result1">Posted as opening soon</string>
+    <string name="sigs_result2">Spot confirmed</string>
 </resources>
