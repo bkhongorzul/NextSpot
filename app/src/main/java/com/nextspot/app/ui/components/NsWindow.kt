@@ -40,8 +40,8 @@ import kotlin.math.min
  * (dp and sp together), and the window is centered. System UI is not drawn.
  */
 @Composable
-fun NsWindow(content: @Composable BoxScope.() -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(NsColors.appBg)) {
+fun NsWindow(bg: Color = NsColors.appBg, content: @Composable BoxScope.() -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(bg)) {
         val scale = min(maxWidth / NsDims.windowW, maxHeight / NsDims.windowH)
         val d = LocalDensity.current
         CompositionLocalProvider(LocalDensity provides Density(d.density * scale, d.fontScale)) {
