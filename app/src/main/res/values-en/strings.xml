@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NextSpot</string>
+
+    <string name="start_demo">One-screen demo</string>
+    <string name="start_real">Start for real</string>
+    <string name="start_safety">While driving, everything is asked and answered by voice</string>
+    <string name="role_title">Which car are you?</string>
+    <string name="role_leaving">Leaving car (Car A)</string>
+    <string name="role_searching">Searching car (Car B)</string>
+
+    <string name="demo_title">One-screen demo</string>
+    <string name="demo_back">Back to start</string>
+    <string name="now">Now</string>
+    <string name="ready">Ready</string>
+    <string name="idle_hint">Press Play in the demo controls below, or send the car signals one by one.</string>
+    <string name="just">Just now</string>
+    <string name="log_all">Full record</string>
+    <string name="log_close">Close record</string>
+    <string name="presenter">Demo controls</string>
+    <string name="play">Play normal flow</string>
+    <string name="pause">Pause</string>
+    <string name="play_cancelled">Play cancelled flow</string>
+    <string name="reset">Start over</string>
+    <string name="signals_open">Send car signals</string>
+    <string name="signals_sub">A real car sends these on its own</string>
+    <string name="sdk_title">Integrations (SDK)</string>
+
+    <string name="leaving_car">Leaving car</string>
+    <string name="searching_car">Searching car</string>
+    <string name="next_spot">NextSpot</string>
+
+    <string name="offer">A spot is opening %1$d m ahead. Go there?</string>
+    <string name="voice_hint">The driver just says “yes” or “no”</string>
+    <string name="voice_listening">Listening. Say “yes” or “no”</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="talk">Speak</string>
+    <string name="talking">Listening</string>
+    <string name="points">leaving car points</string>
+    <string name="total">total %1$d</string>
+
+    <string name="tag_likely">Opening</string>
+    <string name="tag_reserved">Reserved</string>
+    <string name="tag_free">Free</string>
+    <string name="tag_parked">Parked</string>
+    <string name="tag_cancelled">Cancelled</string>
+    <string name="bay_accessible">Accessible</string>
+    <string name="bay_ev">EV charging</string>
+
+    <string name="step1_title">Searching starts</string>
+    <string name="step1_caption">The searching car waits for a nearby spot. The lot is full right now.</string>
+    <string name="step2_title">Leaving car spotted</string>
+    <string name="step2_caption">The leaving car opened and closed its door and set a destination. Its spot is posted as opening soon.</string>
+    <string name="step3_title">Voice offer</string>
+    <string name="step3_caption">The searching driver said “yes”. The spot is reserved for them and navigation leads the way.</string>
+    <string name="step4_title">Departure confirmed</string>
+    <string name="step4_caption">The leaving car released its parking brake and left. The spot is now free.</string>
+    <string name="step5_title">Parked</string>
+    <string name="step5_caption">The searching car parked in that exact spot. The car that left earns 1 point.</string>
+    <string name="cancelled_title">Departure cancelled</string>
+    <string name="cancelled_caption">The leaving car stayed. The offer was taken back and the searching car looks for another spot.</string>
+
+    <string name="sig_search">Start searching</string>
+    <string name="sig_door">Open and close door</string>
+    <string name="sig_nav">Set destination</string>
+    <string name="sig_brake">Release parking brake</string>
+    <string name="sig_park">Park in the spot</string>
+    <string name="sig_cancel">Stay parked</string>
+
+    <string name="log_ready">Demo ready</string>
+    <string name="log_reset">Started over</string>
+    <string name="log_search">Started searching</string>
+    <string name="log_near">Near the destination, searching started automatically (%1$d m)</string>
+    <string name="log_door">Driver door opened and closed</string>
+    <string name="log_belt">Driver seatbelt buckled</string>
+    <string name="log_nav">Navigation destination set</string>
+    <string name="log_likely">Spot posted as opening soon</string>
+    <string name="log_recv">Offer received: %1$d m ahead</string>
+    <string name="log_say">Voice: “A spot is opening %1$d m ahead. Go there?”</string>
+    <string name="log_yes">Driver answered “yes”</string>
+    <string name="log_yes_auto">Driver answered “yes” (auto play)</string>
+    <string name="log_heard_yes">Driver said “%1$s”, accepted</string>
+    <string name="log_heard_no">Driver said “%1$s”, declined</string>
+    <string name="log_heard_unknown">Did not catch that. Speak again or press a button</string>
+    <string name="log_listening">Listening (“yes” / “no”)</string>
+    <string name="log_voice_unavailable">Voice recognition unavailable. Please use the buttons</string>
+    <string name="log_matched">Spot reserved for the searching car</string>
+    <string name="log_guide">Navigation set to the spot</string>
+    <string name="log_taken_by_other">Another car took it first</string>
+    <string name="log_no">Driver answered “no”, still searching</string>
+    <string name="log_brake">Parking brake released</string>
+    <string name="log_spot_confirmed">Spot confirmed</string>
+    <string name="log_confirmed">Departure confirmed</string>
+    <string name="log_park">Parked in the spot</string>
+    <string name="log_taken">Spot passed on, leaving car +1 point</string>
+    <string name="log_cancel">Car stayed parked</string>
+    <string name="log_withdrawn">Offer cancelled automatically</string>
+    <string name="log_bcancel">Voice: “That spot was cancelled. Finding another.”</string>
+    <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
+</resources>

@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>NextSpot 한 화면 시연</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ffffff}a:hover{color:#a4a8ae}
+::selection{background:#ffc224;color:#131417}
+</style>
+</helmet>
+<div style="width: 2560px; height: 1440px; position: relative; overflow: hidden; background: #131417; font-family: 'Asta Sans', system-ui, sans-serif; color: #ffffff">
+
+  <!-- ===== Pleos system UI: driving view ===== -->
+  <div style="position: absolute; left: 0; top: 0; width: 840px; height: 1280px; background: #131417; box-sizing: border-box; padding: 136px 56px 56px; display: flex; flex-direction: column; gap: 40px">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 112px; line-height: 112px; font-weight: 700">0</div>
+        <div style="font-size: 26px; line-height: 34px; color: #a4a8ae">km/h</div>
+      </div>
+      <div style="display: flex; gap: 8px; font-size: 32px; line-height: 40px; font-weight: 700">
+        <div style="width: 56px; height: 56px; border-radius: 4px; background: #ffffff; color: #131417; display: flex; align-items: center; justify-content: center">P</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">R</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">N</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">D</div>
+      </div>
+    </div>
+    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center">
+      <img src="/_blob/11ae55bfe4811d0ff7ed8552bffb174c" alt="" style="width: 240px; height: 471px; display: block">
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 26px; line-height: 34px; color: #a4a8ae">
+      <span>{{t.dvParked}}</span>
+      <span style="display: flex; align-items: center; gap: 10px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ff4339" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 16V8h2.6a2.4 2.4 0 0 1 0 4.8H10"></path></svg>{{t.dvBrake}}</span>
+    </div>
+  </div>
+
+  <!-- ===== Status bar ===== -->
+  <div style="position: absolute; left: 0; top: 0; width: 2560px; height: 96px; box-sizing: border-box; padding: 0 40px 0 880px; display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 16px; font-size: 24px; line-height: 28px; color: #a4a8ae">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"></path></svg>Gleo AI
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linecap="round" style="margin-left: 16px" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    </div>
+    <div style="display: flex; align-items: center; gap: 28px; font-size: 30px; line-height: 38px; font-weight: 700">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><rect x="3" y="15" width="3" height="5" rx="0.5"></rect><rect x="8.5" y="11" width="3" height="9" rx="0.5"></rect><rect x="14" y="7" width="3" height="13" rx="0.5"></rect><rect x="19.5" y="3" width="1.5" height="17" rx="0.5" opacity="0.4"></rect></svg>
+      <span style="font-variant-numeric: tabular-nums">17:43</span>
+    </div>
+  </div>
+
+  <!-- ===== Application window ===== -->
+  <div style="position: absolute; left: 840px; top: 96px; width: 1700px; height: 1184px; background: #1d1e21; border-radius: 12px; overflow: hidden">
+
+    <!-- title bar -->
+    <div style="height: 112px; box-sizing: border-box; padding: 0 40px 0 24px; display: flex; align-items: center; justify-content: space-between">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <a href="Main.dc.html" aria-label="{{t.back}}" style="width: 80px; height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+        </a>
+        <div style="font-size: 36px; line-height: 44px; font-weight: 700">{{t.title}}</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 32px">
+      </div>
+    </div>
+
+    <!-- body: the lot, and what is happening now -->
+    <div style="height: 968px; box-sizing: border-box; padding: 0 40px; display: flex; gap: 40px">
+
+      <!-- LEFT: lot + one-line ticker -->
+      <div style="width: 1080px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="position: relative; width: 1080px; height: 880px; border-radius: 8px; background: #131417; overflow: hidden">
+          <sc-for list="{{topSpots}}" as="sp" hint-placeholder-count="7">
+            <div style="{{sp.box}}">
+              <sc-if value="{{sp.car}}" hint-placeholder-val="{{ true }}">
+                <img src="/_blob/e6113e8437d1c0488d9cae2733da7203" alt="" style="position: absolute; left: 34px; top: 38px; width: 64px; height: 161px; opacity: 0.42">
+              </sc-if>
+              <sc-if value="{{sp.hasTag}}" hint-placeholder-val="{{ false }}">
+                <div style="position: absolute; left: 0; right: 0; top: 208px; text-align: center; font-size: 20px; line-height: 24px; font-weight: 500; color: #a4a8ae; white-space: nowrap">{{sp.tag}}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+
+          <div style="{{bayStyle}}"></div>
+
+          <div style="position: absolute; left: 40px; top: 500px; width: 1000px; height: 0; border-top: 3px dashed #313236"></div>
+          <sc-for list="{{bottomSpots}}" as="sp" hint-placeholder-count="7">
+            <div style="{{sp.box}}">
+              <img src="/_blob/e6113e8437d1c0488d9cae2733da7203" alt="" style="position: absolute; left: 34px; top: 38px; width: 64px; height: 161px; opacity: 0.42; transform: rotate(180deg)">
+            </div>
+          </sc-for>
+
+          <sc-if value="{{route}}" hint-placeholder-val="{{ false }}">
+            <div style="{{routeH}}"></div>
+            <div style="position: absolute; left: 669px; top: 290px; width: 0; height: 330px; border-left: 6px dashed #ffc224"></div>
+          </sc-if>
+
+          <sc-if value="{{spotShow}}" hint-placeholder-val="{{ false }}">
+            <div style="{{statusStyle}}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{lookColor}}" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="{{statusIcon}}"></path></svg>
+              <span>{{spotTag}}</span>
+              <sc-if value="{{showDist}}" hint-placeholder-val="{{ false }}">
+                <span style="font-weight: 400; color: #ffffff; font-variant-numeric: tabular-nums">· 147m</span>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <div style="{{carA.box}}">
+            <div style="{{carA.rot}}">
+              <img src="/_blob/1e5a96fa284f131be3e9e1a67d3aeb22" alt="" style="position: absolute; left: 8px; top: 6px; width: 64px; height: 161px">
+            </div>
+          </div>
+          <div style="{{carB.box}}">
+            <div style="{{carB.rot}}">
+              <img src="/_blob/11ae55bfe4811d0ff7ed8552bffb174c" alt="" style="position: absolute; left: 4px; top: 8px; width: 72px; height: 141px">
+            </div>
+          </div>
+          <div style="{{pinB}}">
+            <svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" fill="#ffc224"></path><path d="M10 14V6.5h2.6a2.3 2.3 0 0 1 0 4.6H10" fill="none" stroke="#131417" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+          <div style="{{tagA}}">{{t.carA}}</div>
+          <div style="{{tagB}}">{{t.carB}}</div>
+
+          <!-- full record, only when asked for -->
+          <sc-if value="{{showLog}}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 20px 32px 16px; background: #1d1e21; display: flex; flex-direction: column">
+              <sc-for list="{{logRows}}" as="row" hint-placeholder-count="6">
+                <div style="height: 44px; display: flex; align-items: center; gap: 24px; font-size: 24px; line-height: 28px; white-space: nowrap">
+                  <span style="width: 104px; flex-shrink: 0; color: #a4a8ae; font-variant-numeric: tabular-nums">{{row.t}}</span>
+                  <span style="{{row.whoStyle}}">{{row.who}}</span>
+                  <span style="color: #e0e1e6; overflow: hidden; text-overflow: ellipsis">{{row.text}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- ticker: only the latest event -->
+        <div style="height: 48px; display: flex; align-items: center; gap: 20px; font-size: 24px; line-height: 28px; white-space: nowrap">
+          <span style="color: #a4a8ae">{{t.just}}</span>
+          <span style="{{last.whoStyle}}">{{last.who}}</span>
+          <span style="color: #e0e1e6; overflow: hidden; text-overflow: ellipsis">{{last.text}}</span>
+          <button onClick="{{toggleLog}}" style="margin-left: auto; height: 48px; padding: 0 4px; border: none; background: transparent; color: #a4a8ae; font-family: inherit; font-size: 24px; cursor: pointer">{{logLabel}}</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: now, then the steps as one quiet list -->
+      <div style="flex-grow: 1; min-width: 0; padding: 8px 0 52px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px">
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 360px">
+          <div style="font-size: 24px; line-height: 28px; color: #a4a8ae">{{nowLabel}}</div>
+          <sc-if value="{{isOffer}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 20px">
+              <div style="font-size: 42px; line-height: 54px; font-weight: 700; word-break: keep-all">{{t.offer}}</div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 24px; line-height: 28px; color: #a4a8ae">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffc224" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>{{t.voiceHint}}
+              </div>
+              <div style="display: flex; gap: 12px; margin-top: 8px">
+                <button onClick="{{doYes}}" style="flex: 1 1 0; height: 100px; border: none; border-radius: 8px; background: #ffc224; color: #131417; font-family: inherit; font-size: 32px; font-weight: 700; cursor: pointer">{{t.yes}}</button>
+                <button onClick="{{doNo}}" style="flex: 1 1 0; height: 100px; border: none; border-radius: 8px; background: #44464e; color: #ffffff; font-family: inherit; font-size: 32px; font-weight: 700; cursor: pointer">{{t.no}}</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{notOffer}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div style="{{nowTitleStyle}}">{{nowTitle}}</div>
+              <div style="font-size: 28px; line-height: 40px; color: #a4a8ae; word-break: keep-all">{{nowCaption}}</div>
+              <sc-if value="{{isTaken}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; align-items: baseline; gap: 16px; padding-top: 8px">
+                  <span style="font-size: 48px; line-height: 56px; font-weight: 700; color: #ffc224; font-variant-numeric: tabular-nums">+1</span>
+                  <span style="font-size: 26px; line-height: 34px; color: #ffffff">{{t.points}}</span>
+                  <span style="font-size: 26px; line-height: 34px; color: #a4a8ae; font-variant-numeric: tabular-nums">{{t.total}} {{credits}}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+            <div style="height: 60px; display: flex; align-items: center; gap: 20px">
+              <div style="{{r.markStyle}}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{r.iconColor}}" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="{{r.icon}}"></path></svg>
+              </div>
+              <span style="{{r.titleStyle}}">{{r.title}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- car signals, only when asked for -->
+    <sc-if value="{{showSignals}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; right: 40px; bottom: 116px; width: 820px; box-sizing: border-box; padding: 24px; border-radius: 8px; background: #26272b; display: flex; flex-direction: column; gap: 16px">
+        <div style="font-size: 22px; line-height: 28px; color: #a4a8ae">{{t.signalsSub}}</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{tiles}}" as="tile" hint-placeholder-count="6">
+            <button onClick="{{tile.go}}" disabled="{{tile.disabled}}" style="{{tile.style}}">
+              <span style="display: flex; flex-direction: column; gap: 2px; text-align: left; min-width: 0">
+                <span style="{{tile.whoStyle}}">{{tile.who}}</span>
+                <span style="{{tile.labelStyle}}">{{tile.label}}</span>
+              </span>
+              <sc-if value="{{tile.done}}" hint-placeholder-val="{{ false }}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffc224" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- presenter strip: quiet and apart from the product -->
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 104px; box-sizing: border-box; padding: 0 40px; background: #18191c; display: flex; align-items: center; gap: 12px">
+      <span style="font-size: 22px; line-height: 28px; color: #a4a8ae; margin-right: 12px">{{t.presenter}}</span>
+      <button onClick="{{doPlay}}" style="height: 64px; padding: 0 28px; border: none; border-radius: 8px; background: #313236; color: #ffffff; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="{{playIcon}}"></path></svg>{{playLabel}}
+      </button>
+      <button onClick="{{doCancelScenario}}" style="height: 64px; padding: 0 28px; border: none; border-radius: 8px; background: #313236; color: #ffffff; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"></path></svg>{{t.cancelScenario}}
+      </button>
+      <button onClick="{{doReset}}" style="height: 64px; padding: 0 28px; border: none; border-radius: 8px; background: #313236; color: #ffffff; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"></path></svg>{{t.reset}}
+      </button>
+      <button onClick="{{toggleSignals}}" aria-expanded="{{showSignals}}" style="margin-left: auto; height: 64px; padding: 0 4px; border: none; background: transparent; color: #a4a8ae; font-family: inherit; font-size: 24px; cursor: pointer; display: flex; align-items: center; gap: 8px">
+        {{t.signalsOpen}}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="{{signalsChevron}}"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 2547px; top: 638px; width: 6px; height: 96px; border-radius: 2px; background: #44464e"></div>
+
+  <!-- ===== GNB ===== -->
+  <div style="position: absolute; left: 0; top: 1280px; width: 2560px; height: 160px; box-sizing: border-box; padding: 0 64px; display: flex; align-items: center; justify-content: space-between">
+    <div style="font-size: 36px; line-height: 44px; font-weight: 700; font-variant-numeric: tabular-nums">22.0°</div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="#a4a8ae" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"></path></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; background: #313236; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ffc224" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"></path><path d="M10 14V6.5h2.6a2.3 2.3 0 0 1 0 4.6H10"></path></svg>
+      </div>
+    </div>
+    <div style="font-size: 36px; line-height: 44px; font-weight: 700; font-variant-numeric: tabular-nums">22.0°</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startPhase":{"editor":"enum","options":["idle","searching","likely","offer","reserved","confirmed","taken","withdrawn"],"default":"idle"},"lang":{"editor":"enum","options":["ko","en"],"default":"ko"},"$preview":{"width":2560,"height":1440}}'>
+// Same flags, phase order and log events as DemoEngine.kt (Car A = leaving car, Car B = searching car).
+var TXT = {
+  ko: {
+    title: '한 화면 시연', back: '처음 화면으로', now: '지금', ready: '대기 중', just: '방금', logAll: '기록 전체 보기', logClose: '기록 닫기', presenter: '시연 조작', signalsOpen: '차 신호 직접 보내기', langLabel: '언어', points: '나가는 차 포인트', total: '총',
+    carA: '나가는 차', carB: '찾는 차',
+    log: '기록', progress: '진행 상황',
+    idleHint: '아래 시연 조작에서 재생을 누르거나, 차 신호를 하나씩 보내 보세요.',
+    signals: '차 신호 직접 보내기', signalsSub: '실제 차에서는 자동으로 들어오는 신호예요',
+    play: '정상 흐름 재생', stop: '멈춤', cancelScenario: '출발 취소 흐름 재생', reset: '처음부터',
+    offer: '147m 앞에 곧 자리가 납니다. 갈까요?', voiceHint: '운전자는 “네” 또는 “아니요”라고 말하면 돼요',
+    yes: '네', no: '아니요',
+    dvParked: '주차 중', dvBrake: '주차 브레이크',
+    tags: { likely: '곧 빔', reserved: '예약됨', confirmed: '빔', taken: '주차함', withdrawn: '취소' },
+    ev: '전기차 충전', acc: '장애인 전용',
+    tiles: { search: '자리 찾기 시작', door: '문 열고 닫기', nav: '내비 목적지 설정', brake: '주차 브레이크 해제', park: '주차 완료', cancel: '출발 안 함' },
+    steps: [
+      ['자리 찾기 시작', '찾는 차가 근처 빈자리를 기다려요. 주차장은 지금 꽉 차 있어요.'],
+      ['나갈 차 감지', '나가는 차가 문을 여닫고 내비 목적지를 정했어요. 그 자리를 곧 빌 자리로 등록했어요.'],
+      ['음성으로 제안', '찾는 차가 “네”라고 답했어요. 이 자리는 찾는 차에게 예약되고, 내비가 그 자리로 안내해요.'],
+      ['출발 확정', '나가는 차가 주차 브레이크를 풀고 출발했어요. 이제 자리가 확실히 비었어요.'],
+      ['주차 완료', '찾는 차가 바로 그 자리에 주차했어요. 자리를 넘겨준 차는 포인트 1점을 받아요.']
+    ],
+    stop4: ['출발 취소', '나가는 차가 출발하지 않았어요. 제안을 자동으로 거두고, 찾는 차는 다른 자리를 찾아요.'],
+    who: { A: '나가는 차', B: '찾는 차', N: 'NextSpot' },
+    L: {
+      ready: '시연 준비 완료', reset: '처음부터 다시 시작', search: '자리 찾기 시작',
+      door: '운전석 문 열고 닫음', nav: '내비 목적지 설정', likely: '곧 빌 자리로 등록',
+      recv: '147m 앞 자리 제안 받음', say: '음성 안내 “147m 앞에 곧 자리가 납니다. 갈까요?”', yes: '운전자가 “네”라고 답함',
+      matched: '찾는 차에게 자리 예약', guide: '내비 목적지를 그 자리로 변경', no: '운전자가 “아니요”라고 답함, 계속 찾는 중',
+      brake: '주차 브레이크 해제', confirmed: '출발 확정', park: '그 자리에 주차',
+      taken: '자리 넘겨주기 완료, 나가는 차 포인트 +1', thanks: '음성 안내 “다음 차에게 자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”',
+      cancel: '출발하지 않음', withdrawn: '제안 자동 취소', bcancel: '음성 안내 “자리가 취소됐어요. 다른 자리를 찾을게요.”'
+    }
+  },
+  en: {
+    title: 'One-screen demo', back: 'Back to start', now: 'Now', ready: 'Ready', just: 'Just now', logAll: 'Full record', logClose: 'Close record', presenter: 'Demo controls', signalsOpen: 'Send car signals', langLabel: 'Language', points: 'leaving car points', total: 'total',
+    carA: 'Leaving car', carB: 'Searching car',
+    log: 'Record', progress: 'Progress',
+    idleHint: 'Press Play in the demo controls below, or send the car signals one by one.',
+    signals: 'Send car signals yourself', signalsSub: 'A real car sends these on its own',
+    play: 'Play normal flow', stop: 'Pause', cancelScenario: 'Play cancelled flow', reset: 'Start over',
+    offer: 'A spot is opening 147 m ahead. Go there?', voiceHint: 'The driver just says “yes” or “no”',
+    yes: 'Yes', no: 'No',
+    dvParked: 'Parked', dvBrake: 'Parking brake',
+    tags: { likely: 'Opening', reserved: 'Reserved', confirmed: 'Free', taken: 'Parked', withdrawn: 'Cancelled' },
+    ev: 'EV charging', acc: 'Accessible',
+    tiles: { search: 'Start searching', door: 'Open and close door', nav: 'Set destination', brake: 'Release parking brake', park: 'Park in the spot', cancel: 'Stay parked' },
+    steps: [
+      ['Searching starts', 'The searching car waits for a nearby spot. The lot is full right now.'],
+      ['Leaving car spotted', 'The leaving car opened and closed its door and set a destination. Its spot is posted as opening soon.'],
+      ['Voice offer', 'The searching driver said “yes”. The spot is reserved for them and navigation leads the way.'],
+      ['Departure confirmed', 'The leaving car released its parking brake and left. The spot is now free.'],
+      ['Parked', 'The searching car parked in that exact spot. The car that left earns 1 point.']
+    ],
+    stop4: ['Departure cancelled', 'The leaving car stayed. The offer was taken back and the searching car looks for another spot.'],
+    who: { A: 'Leaving car', B: 'Searching car', N: 'NextSpot' },
+    L: {
+      ready: 'Demo ready', reset: 'Started over', search: 'Started searching',
+      door: 'Driver door opened and closed', nav: 'Navigation destination set', likely: 'Spot posted as opening soon',
+      recv: 'Offer received: 147 m ahead', say: 'Voice: “A spot is opening 147 m ahead. Go there?”', yes: 'Driver answered “yes”',
+      matched: 'Spot reserved for the searching car', guide: 'Navigation set to the spot', no: 'Driver answered “no”, still searching',
+      brake: 'Parking brake released', confirmed: 'Departure confirmed', park: 'Parked in the spot',
+      taken: 'Spot passed on, leaving car +1 point', thanks: 'Voice: “Your spot went to the next car. 1 point added.”',
+      cancel: 'Car stayed parked', withdrawn: 'Offer cancelled automatically', bcancel: 'Voice: “That spot was cancelled. Finding another.”'
+    }
+  }
+};
+
+function clock() {
+  var d = new Date();
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+function withLog(s, entries) {
+  var t = clock();
+  var add = entries.map(function (e) { return { t: t, who: e[0], k: e[1] }; }).reverse();
+  return Object.assign({}, s, { log: add.concat(s.log).slice(0, 30) });
+}
+function init(k) {
+  return { v: 1, searching: false, door: false, nav: false, brake: false, likely: false, offered: false,
+    asking: false, accepted: false, confirmed: false, parked: false, withdrawn: false, credits: 3,
+    playing: false, log: [{ t: clock(), who: 'N', k: k || 'ready' }] };
+}
+var ACT = {
+  search: function (s) {
+    if (s.searching || s.withdrawn || s.parked) return s;
+    return withLog(Object.assign({}, s, { searching: true }), [['B', 'search']]);
+  },
+  door: function (s) {
+    if (s.door || s.withdrawn) return s;
+    return ACT._likely(withLog(Object.assign({}, s, { door: true }), [['A', 'door']]));
+  },
+  nav: function (s) {
+    if (s.nav || s.withdrawn) return s;
+    return ACT._likely(withLog(Object.assign({}, s, { nav: true }), [['A', 'nav']]));
+  },
+  _likely: function (s) {
+    if (s.door && s.nav && !s.likely) return withLog(Object.assign({}, s, { likely: true }), [['N', 'likely']]);
+    return s;
+  },
+  offer: function (s) {
+    if (!s.likely || !s.searching || s.offered || s.withdrawn) return s;
+    return withLog(Object.assign({}, s, { offered: true, asking: true }), [['B', 'recv'], ['B', 'say']]);
+  },
+  yes: function (s) {
+    if (!s.asking) return s;
+    return withLog(Object.assign({}, s, { asking: false, accepted: true }), [['B', 'yes'], ['N', 'matched'], ['B', 'guide']]);
+  },
+  no: function (s) {
+    if (!s.asking) return s;
+    return withLog(Object.assign({}, s, { asking: false }), [['B', 'no']]);
+  },
+  brake: function (s) {
+    if (!s.likely || s.brake || s.withdrawn) return s;
+    return withLog(Object.assign({}, s, { brake: true, confirmed: true }), [['A', 'brake'], ['N', 'confirmed']]);
+  },
+  park: function (s) {
+    if (!s.accepted || !s.confirmed || s.parked) return s;
+    return withLog(Object.assign({}, s, { parked: true, credits: s.credits + 1 }), [['B', 'park'], ['N', 'taken'], ['A', 'thanks']]);
+  },
+  cancel: function (s) {
+    if (!s.likely || s.confirmed || s.withdrawn) return s;
+    var e = [['A', 'cancel'], ['N', 'withdrawn']];
+    if (s.accepted || s.asking) e.push(['B', 'bcancel']);
+    return withLog(Object.assign({}, s, { withdrawn: true, asking: false, accepted: false }), e);
+  }
+};
+var PRESET = {
+  idle: [], searching: ['search'], likely: ['search', 'door', 'nav'],
+  offer: ['search', 'door', 'nav', 'offer'], reserved: ['search', 'door', 'nav', 'offer', 'yes'],
+  confirmed: ['search', 'door', 'nav', 'offer', 'yes', 'brake'],
+  taken: ['search', 'door', 'nav', 'offer', 'yes', 'brake', 'park'],
+  withdrawn: ['search', 'door', 'nav', 'offer', 'yes', 'cancel']
+};
+var SCRIPT = [[800, 'search'], [2500, 'door'], [1200, 'nav'], [2800, 'offer'], [3000, 'yes'], [3000, 'brake'], [4000, 'park']];
+var SCRIPT_CANCEL = [[800, 'search'], [2500, 'door'], [1200, 'nav'], [2800, 'offer'], [3000, 'yes'], [3000, 'cancel']];
+
+// lot geometry (1080 x 880): bay k centre x = 144 + 132k, the handed-over bay is k = 4 (x 672)
+// [x, y, rotation, seconds to get there]; the searching car keeps rolling between steps instead of hopping
+var POS_B = { idle: [120, 620, 90, 0], searching: [210, 620, 90, 2.5], likely: [280, 620, 90, 2.4], offer: [340, 620, 90, 1.6],
+  reserved: [460, 620, 90, 2.6], confirmed: [560, 620, 90, 2.4], withdrawn: [920, 620, 90, 3.2] };
+var A_PATH = [[672, 168, 0, 1, 0], [672, 370, 0, 1, 1.3], [830, 420, 90, 1, 1.1], [1180, 420, 90, 0, 1.9]];  // [x, y, rot, opacity, seconds]
+var B_PARK = [[560, 620, 90, 2.4], [672, 420, 0, 1.6], [672, 168, 0, 1.6]];
+
+var STEP_ICON = [
+  'M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14zM20 20l-3.5-3.5',
+  'M14 4H5v16h9M10 12h10M17 9l3 3-3 3',
+  'M4 10v4h4l5 4V6L8 10zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11',
+  'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM10 16V8h2.6a2.4 2.4 0 0 1 0 4.8H10',
+  'M4 4h16v16H4zM10 16V8h3a2.5 2.5 0 0 1 0 5h-3'
+];
+var STOP_ICON = 'M6 6l12 12M18 6L6 18';
+var CLOCK = 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2';
+var LOOK = {
+  likely:    { color: '#ffffff', line: 'dashed', w: 5, icon: CLOCK, tag: 'likely' },
+  offer:     { color: '#ffffff', line: 'dashed', w: 5, icon: CLOCK, tag: 'likely' },
+  reserved:  { color: '#ffc224', line: 'solid',  w: 5, icon: 'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3', tag: 'reserved' },
+  confirmed: { color: '#02c265', line: 'solid',  w: 5, icon: 'M5 12.5l4.5 4.5L19 7.5', tag: 'confirmed' },
+  taken:     { color: '#02c265', line: 'solid',  w: 5, icon: 'M4 4h16v16H4zM10 16V8h3a2.5 2.5 0 0 1 0 5h-3', tag: 'taken' },
+  withdrawn: { color: '#e0574d', line: 'solid',  w: 3, icon: STOP_ICON, tag: 'withdrawn' }
+};
+
+class Component extends DCLogic {
+  cur() {
+    if (this.state && this.state.v) return this.state;
+    var s = init();
+    (PRESET[this.props.startPhase] || []).forEach(function (a) { s = ACT[a](s); });
+    if (s.confirmed) s = Object.assign({}, s, { aStep: 3 });
+    if (s.parked) s = Object.assign({}, s, { bStep: 2 });
+    return s;
+  }
+  act(name) {
+    var s = this.cur();
+    var n = ACT[name](s);
+    if (n !== s) this.setState(n);
+  }
+  patch(o) { this.setState(Object.assign({}, this.cur(), o)); }
+  animate(key, to, timerKey, path, di) {
+    var self = this;
+    if (this[timerKey]) return;
+    var step = function () {
+      var c = self.cur()[key] || 0;
+      if (c >= to) { self[timerKey] = null; return; }
+      var o = {}; o[key] = c + 1;
+      self.patch(o);
+      self[timerKey] = setTimeout(step, path[c + 1][di] * 1000);
+    };
+    this[timerKey] = setTimeout(step, 0);
+  }
+  clearTimers() {
+    clearTimeout(this.timer); clearTimeout(this.offerT); clearTimeout(this.aT); clearTimeout(this.bT);
+    this.offerT = null; this.aT = null; this.bT = null;
+  }
+  componentDidUpdate() {
+    var s = this.cur();
+    var ph = this.phaseOf(s);
+    if ((ph === 'confirmed' || ph === 'taken') && (s.aStep || 0) < 3) this.animate('aStep', 3, 'aT', A_PATH, 4);
+    if (ph === 'taken' && (s.bStep || 0) < 2) this.animate('bStep', 2, 'bT', B_PARK, 3);
+    if (!s.playing && s.likely && s.searching && !s.offered && !s.withdrawn && !this.offerT) {
+      var self = this;
+      this.offerT = setTimeout(function () { self.offerT = null; self.act('offer'); }, 1200);
+    }
+  }
+  componentWillUnmount() { this.clearTimers(); }
+  keep() { var c = this.cur(); return { lang: c.lang, showLog: c.showLog, showSignals: c.showSignals }; }
+  run(script) {
+    var self = this;
+    this.clearTimers();
+    this.setState(Object.assign(init('reset'), this.keep(), { playing: true }));
+    var i = 0;
+    var step = function () {
+      if (i >= script.length) { self.patch({ playing: false }); return; }
+      var it = script[i++];
+      self.timer = setTimeout(function () { self.act(it[1]); step(); }, it[0]);
+    };
+    step();
+  }
+  phaseOf(s) {
+    if (s.withdrawn) return 'withdrawn';
+    if (s.parked) return 'taken';
+    if (s.confirmed) return 'confirmed';
+    if (s.accepted) return 'reserved';
+    if (s.asking) return 'offer';
+    if (s.likely) return 'likely';
+    if (s.searching) return 'searching';
+    return 'idle';
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.cur();
+    var lang = s.lang || this.props.lang || 'ko';
+    var t = TXT[lang];
+    var ph = this.phaseOf(s);
+    var Y = '#ffc224';
+
+    var seg = 'height: 56px; padding: 0 24px; border: none; border-radius: 4px; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; ';
+    var on = seg + 'background: #ffffff; color: #131417';
+    var off = seg + 'background: transparent; color: #a4a8ae';
+
+    // ---- lot ----
+    var look = LOOK[ph];
+    var line = 'border-left: 3px solid #44464e;';
+    function bay(k, top) {
+      return 'position: absolute; left: ' + (78 + 132 * k) + 'px; top: ' + top + 'px; width: 132px; height: 240px; box-sizing: border-box; ' + line + (k === 6 ? ' border-right: 3px solid #44464e;' : '');
+    }
+    var topSpots = [0, 1, 2, 3, 4, 5, 6].map(function (k) {
+      var tag = k === 0 ? t.acc : (k === 6 ? t.ev : '');
+      return { car: k !== 4, hasTag: !!tag, tag: tag, box: bay(k, 48) };
+    });
+    var bottomSpots = [0, 1, 2, 3, 4, 5, 6].map(function (k) { return { box: bay(k, 720) }; });
+    var drive = 'cubic-bezier(0.4, 0, 0.3, 1)';
+    function car(p, op, d) {
+      return {
+        box: 'position: absolute; left: ' + (p[0] - 90) + 'px; top: ' + (p[1] - 90) + 'px; width: 180px; height: 180px; opacity: ' + op + '; transition: left ' + d + 's ' + drive + ', top ' + d + 's ' + drive + ', opacity ' + d + 's',
+        rot: 'position: absolute; left: 50px; top: 3px; width: 80px; height: 173px; transform: rotate(' + p[2] + 'deg); transition: transform ' + d + 's ' + drive
+      };
+    }
+    function tag(p, op, color, d) {
+      var top = p[1] < 290 ? 10 : p[1] + (p[2] ? 46 : 88);
+      return 'position: absolute; left: ' + (p[0] - 90) + 'px; top: ' + top + 'px; width: 180px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: ' + op + '; transition: left ' + d + 's ' + drive + ', top ' + d + 's ' + drive + ', opacity 0.3s; pointer-events: none; font-size: 22px; line-height: 24px; font-weight: 700; white-space: nowrap; color: ' + color;
+    }
+    var aStep = (ph === 'confirmed' || ph === 'taken') ? (s.aStep || 0) : 0;
+    var bStep = ph === 'taken' ? (s.bStep || 0) : 0;
+    var pa = A_PATH[aStep];
+    var pb = ph === 'taken' ? B_PARK[bStep] : POS_B[ph];
+    var hx = pb[0] + 87;
+
+    // ---- now ----
+    var cur = { idle: -1, searching: 0, likely: 1, offer: 2, reserved: 2, confirmed: 3, taken: 4, withdrawn: 3 }[ph];
+    var nowTitle, nowCaption;
+    if (ph === 'idle') { nowTitle = t.ready; nowCaption = t.idleHint; }
+    else if (ph === 'withdrawn') { nowTitle = t.stop4[0]; nowCaption = t.stop4[1]; }
+    else { nowTitle = t.steps[cur][0]; nowCaption = t.steps[cur][1]; }
+
+    // ---- steps: one quiet line each ----
+    var rows = t.steps.map(function (st, i) {
+      var stop = ph === 'withdrawn' && i === 3;
+      var state = stop ? 'stop' : (i < cur ? 'done' : (i === cur ? 'current' : 'todo'));
+      if (ph === 'taken' && i === 4) state = 'final';
+      var mark = 'width: 40px; height: 40px; flex-shrink: 0; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; ';
+      var iconColor;
+      if (state === 'current') { mark += 'background: ' + Y; iconColor = '#131417'; }
+      else if (state === 'final') { mark += 'background: #02c265'; iconColor = '#131417'; }
+      else if (state === 'stop') { mark += 'background: rgba(255, 67, 57, 0.16)'; iconColor = '#ff4339'; }
+      else if (state === 'done') { mark += 'background: #313236'; iconColor = Y; }
+      else { mark += 'background: #313236'; iconColor = '#686a72'; }
+      var lead = state === 'current' || state === 'final' || state === 'stop';
+      return {
+        title: stop ? t.stop4[0] : st[0],
+        icon: stop ? STOP_ICON : STEP_ICON[i],
+        iconColor: iconColor, markStyle: mark,
+        titleStyle: 'font-size: 26px; line-height: 32px; font-weight: ' + (lead ? 700 : 400) + '; color: ' + (lead ? '#ffffff' : (state === 'done' ? '#a4a8ae' : '#686a72'))
+      };
+    });
+
+    // ---- car signals (hidden until asked for) ----
+    var busy = s.playing;
+    var defs = [
+      ['search', 'B', s.searching, !s.searching && !s.withdrawn && !s.parked],
+      ['door', 'A', s.door, !s.door && !s.withdrawn],
+      ['nav', 'A', s.nav, !s.nav && !s.withdrawn],
+      ['brake', 'A', s.brake, s.likely && !s.brake && !s.withdrawn],
+      ['park', 'B', s.parked, s.accepted && s.confirmed && !s.parked],
+      ['cancel', 'A', s.withdrawn, s.likely && !s.confirmed && !s.withdrawn]
+    ];
+    var tiles = defs.map(function (d) {
+      var done = d[2], can = d[3] && !busy;
+      var base = 'height: 80px; box-sizing: border-box; padding: 0 16px; border: none; border-radius: 8px; font-family: inherit; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: background 0.2s; ';
+      return {
+        who: t.who[d[1]], label: t.tiles[d[0]], done: done, disabled: !can,
+        style: base + (can ? 'background: #44464e; cursor: pointer' : 'background: #313236; cursor: default'),
+        whoStyle: 'font-size: 20px; line-height: 24px; font-weight: 700; color: ' + (done || can ? (d[1] === 'A' ? '#e0e1e6' : Y) : '#686a72'),
+        labelStyle: 'font-size: 24px; line-height: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ' + (can ? '#ffffff' : (done ? '#a4a8ae' : '#686a72')),
+        go: function () { if (d[3] && !self.cur().playing) self.act(d[0]); }
+      };
+    });
+
+    // ---- record ----
+    var WHO = { A: '#e0e1e6', B: Y, N: '#a4a8ae' };
+    function logRow(e) {
+      return { t: e.t, who: t.who[e.who], text: t.L[e.k], whoStyle: 'width: 150px; flex-shrink: 0; font-weight: 700; color: ' + WHO[e.who] };
+    }
+    var last = logRow(s.log[0]);
+    last.whoStyle = 'flex-shrink: 0; font-weight: 700; color: ' + WHO[s.log[0].who];
+
+    return {
+      t: t, credits: s.credits,
+      isKo: lang === 'ko', isEn: lang === 'en',
+      koStyle: lang === 'ko' ? on : off, enStyle: lang === 'en' ? on : off,
+      setKo: function () { self.patch({ lang: 'ko' }); },
+      setEn: function () { self.patch({ lang: 'en' }); },
+      topSpots: topSpots, bottomSpots: bottomSpots,
+      bayStyle: look
+        ? 'position: absolute; left: 606px; top: 48px; width: 135px; height: 240px; box-sizing: border-box; border-left: ' + look.w + 'px ' + look.line + ' ' + look.color + '; border-right: ' + look.w + 'px ' + look.line + ' ' + look.color + '; transition: border-color 0.25s'
+        : 'display: none',
+      spotShow: !!look,
+      lookColor: look ? look.color : '#ffffff',
+      statusIcon: look ? look.icon : '',
+      spotTag: look ? t.tags[look.tag] : '',
+      statusStyle: 'position: absolute; left: 760px; top: 304px; width: 300px; height: 32px; display: flex; align-items: center; gap: 10px; font-size: 26px; line-height: 32px; font-weight: 700; white-space: nowrap; color: ' + (look ? look.color : '#ffffff'),
+      showDist: ph === 'offer' || ph === 'reserved',
+      route: ph === 'reserved' || ph === 'confirmed',
+      routeH: 'position: absolute; left: ' + hx + 'px; top: 617px; width: ' + Math.max(0, 675 - hx) + 'px; height: 0; border-top: 6px dashed ' + Y,
+      carA: car(pa, pa[3], pa[4]), carB: car(pb, 1, pb[3]),
+      tagA: tag(pa, aStep === 0 ? 1 : 0, '#e0e1e6', pa[4]),
+      tagB: tag(pb, ph === 'taken' && bStep < 2 ? 0 : 1, Y, pb[3]),
+      pinB: 'position: absolute; left: ' + (pb[0] - 24) + 'px; top: ' + (pb[1] - (pb[2] ? 40 : 86) - 46) + 'px; width: 48px; height: 48px; transition: left ' + pb[3] + 's ' + drive + ', top ' + pb[3] + 's ' + drive + '; pointer-events: none',
+      nowLabel: ph === 'offer' ? t.now + ' · ' + t.steps[2][0] : t.now,
+      isOffer: ph === 'offer', notOffer: ph !== 'offer',
+      nowTitle: nowTitle, nowCaption: nowCaption, isTaken: ph === 'taken',
+      nowTitleStyle: 'font-size: 42px; line-height: 54px; font-weight: 700; word-break: keep-all; color: ' + (ph === 'taken' ? '#02c265' : '#ffffff'),
+      rows: rows,
+      last: last,
+      showLog: !!s.showLog,
+      logRows: s.log.slice(0, 6).map(logRow),
+      logLabel: s.showLog ? t.logClose + ' ×' : t.logAll + ' ›',
+      toggleLog: function () { self.patch({ showLog: !self.cur().showLog }); },
+      showSignals: !!s.showSignals,
+      signalsChevron: s.showSignals ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6',
+      toggleSignals: function () { self.patch({ showSignals: !self.cur().showSignals }); },
+      tiles: tiles,
+      doYes: function () { self.act('yes'); },
+      doNo: function () { self.act('no'); },
+      playLabel: s.playing ? t.stop : t.play,
+      playIcon: s.playing ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M7 4.5v15l13-7.5z',
+      doPlay: function () {
+        if (self.cur().playing) { self.clearTimers(); self.patch({ playing: false }); }
+        else self.run(SCRIPT);
+      },
+      doCancelScenario: function () { self.run(SCRIPT_CANCEL); },
+      doReset: function () { self.clearTimers(); self.setState(Object.assign(init('reset'), self.keep())); }
+    };
+  }
+}
+</script>
+</body>
+</html>

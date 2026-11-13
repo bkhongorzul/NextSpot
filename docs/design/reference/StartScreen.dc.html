@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>NextSpot 시작 화면</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ffffff}a:hover{color:#a4a8ae}
+::selection{background:#ffc224;color:#131417}
+</style>
+</helmet>
+<div style="width: 2560px; height: 1440px; position: relative; overflow: hidden; background: #131417; font-family: 'Asta Sans', system-ui, sans-serif; color: #ffffff">
+
+  <!-- ===== Pleos system UI: driving view ===== -->
+  <div style="position: absolute; left: 0; top: 0; width: 840px; height: 1280px; background: #131417; box-sizing: border-box; padding: 136px 56px 56px; display: flex; flex-direction: column; gap: 40px">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 112px; line-height: 112px; font-weight: 700">0</div>
+        <div style="font-size: 26px; line-height: 34px; color: #a4a8ae">km/h</div>
+      </div>
+      <div style="display: flex; gap: 8px; font-size: 32px; line-height: 40px; font-weight: 700">
+        <div style="width: 56px; height: 56px; border-radius: 4px; background: #ffffff; color: #131417; display: flex; align-items: center; justify-content: center">P</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">R</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">N</div>
+        <div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #686a72">D</div>
+      </div>
+    </div>
+    <div style="flex-grow: 1"></div>
+    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 26px; line-height: 34px; color: #a4a8ae">
+      <span>{{t.dvParked}}</span>
+      <span style="display: flex; align-items: center; gap: 10px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ff4339" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 16V8h2.6a2.4 2.4 0 0 1 0 4.8H10"></path></svg>{{t.dvBrake}}</span>
+    </div>
+  </div>
+
+  <!-- ===== Status bar ===== -->
+  <div style="position: absolute; left: 0; top: 0; width: 2560px; height: 96px; box-sizing: border-box; padding: 0 40px 0 880px; display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 16px; font-size: 24px; line-height: 28px; color: #a4a8ae">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"></path></svg>Gleo AI
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linecap="round" style="margin-left: 16px" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    </div>
+    <div style="display: flex; align-items: center; gap: 28px; font-size: 30px; line-height: 38px; font-weight: 700">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><rect x="3" y="15" width="3" height="5" rx="0.5"></rect><rect x="8.5" y="11" width="3" height="9" rx="0.5"></rect><rect x="14" y="7" width="3" height="13" rx="0.5"></rect><rect x="19.5" y="3" width="1.5" height="17" rx="0.5" opacity="0.4"></rect></svg>
+      <span style="font-variant-numeric: tabular-nums">17:43</span>
+    </div>
+  </div>
+
+  <!-- ===== Application window ===== -->
+  <div style="position: absolute; left: 840px; top: 96px; width: 1700px; height: 1184px; background: #1d1e21; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column">
+
+    <!-- title bar -->
+    <div style="height: 112px; flex-shrink: 0; box-sizing: border-box; padding: 0 40px 0 80px; display: flex; align-items: center; justify-content: space-between">
+    </div>
+
+    <!-- body -->
+    <div style="flex-grow: 1; box-sizing: border-box; padding: 0 80px 56px; display: flex; flex-direction: column; align-items: center">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 72px">
+
+        <!-- wordmark + one parking line drawn under it -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px">
+          <div style="position: relative">
+            <span style="display: block; font-size: 72px; line-height: 88px; font-weight: 700; letter-spacing: -0.02em">NextSpot</span>
+            <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 100%; bottom: 14px; margin-left: 6px"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" fill="#ffc224"></path><path d="M10 14V6.5h2.6a2.3 2.3 0 0 1 0 4.6H10" fill="none" stroke="#131417" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+          <div style="position: relative; width: 400px; height: 36px">
+            <div style="{{lineStyle}}"></div>
+            <div style="{{tickL}}"></div>
+            <div style="{{tickR}}"></div>
+          </div>
+        </div>
+
+        <!-- two actions, same weight -->
+        <div style="width: 860px; display: flex; flex-direction: column; gap: 16px">
+          <a href="Demo.dc.html" style="height: 100px; border-radius: 8px; background: #313236; color: #ffffff; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 30px; line-height: 44px; font-weight: 700">{{t.demoTitle}}</a>
+          <button style="height: 100px; border: none; border-radius: 8px; background: #313236; color: #ffffff; font-family: inherit; font-size: 30px; line-height: 44px; font-weight: 700; cursor: pointer">{{t.realTitle}}</button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 26px; line-height: 34px; color: #a4a8ae">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+        {{t.safety}}
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 2547px; top: 638px; width: 6px; height: 96px; border-radius: 2px; background: #44464e"></div>
+
+  <!-- ===== GNB ===== -->
+  <div style="position: absolute; left: 0; top: 1280px; width: 2560px; height: 160px; box-sizing: border-box; padding: 0 64px; display: flex; align-items: center; justify-content: space-between">
+    <div style="font-size: 36px; line-height: 44px; font-weight: 700; font-variant-numeric: tabular-nums">22.0°</div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="#a4a8ae" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"></path></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a4a8ae" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg>
+      </div>
+      <div style="width: 112px; height: 112px; border-radius: 8px; background: #313236; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ffc224" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"></path><path d="M10 14V6.5h2.6a2.3 2.3 0 0 1 0 4.6H10"></path></svg>
+      </div>
+    </div>
+    <div style="font-size: 36px; line-height: 44px; font-weight: 700; font-variant-numeric: tabular-nums">22.0°</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["ko","en"],"default":"ko"},"$preview":{"width":2560,"height":1440}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this;
+    this.t = setTimeout(function () { self.setState({ arrived: true }); }, 350);
+  }
+  componentWillUnmount() { clearTimeout(this.t); }
+  renderVals() {
+    var T = {
+      ko: {
+        langLabel: '언어',
+        demoTitle: '한 화면 시연',
+        demoSub: '두 차가 자리를 주고받는 과정을 처음부터 끝까지 보여줘요',
+        realTitle: '실제 시작',
+        realSub: '곧 떠날 때, 내 자리를 다음 차에게 넘겨줘요',
+        safety: '주행 중에는 화면 대신 음성으로만 묻고 답해요',
+        dvParked: '주차 중', dvBrake: '주차 브레이크'
+      },
+      en: {
+        langLabel: 'Language',
+        demoTitle: 'One-screen demo',
+        demoSub: 'Watch two cars pass a spot along, start to finish',
+        realTitle: 'Start for real',
+        realSub: 'Pass your spot on to the next car as you leave',
+        safety: 'While driving, everything is asked and answered by voice',
+        dvParked: 'Parked', dvBrake: 'Parking brake'
+      }
+    };
+    var s = this.state || {};
+    var lang = s.lang || this.props.lang || 'ko';
+    var arrived = !!s.arrived;
+    var base = 'height: 56px; padding: 0 24px; border: none; border-radius: 4px; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; ';
+    var on = base + 'background: #ffffff; color: #131417';
+    var off = base + 'background: transparent; color: #a4a8ae';
+    var self = this;
+    var ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+    // one stall line sweeps in under the name, then its two ends drop: the outline of a parking bay
+    var line = 'position: absolute; left: 0; bottom: 0; height: 6px; background: #ffc224; width: ' + (arrived ? 400 : 0) + 'px; transition: width 0.6s ' + ease;
+    var tick = 'position: absolute; bottom: 0; width: 6px; background: #ffc224; height: ' + (arrived ? 36 : 0) + 'px; transition: height 0.3s ' + ease + ' 0.55s; ';
+    return {
+      t: T[lang],
+      lineStyle: line,
+      tickL: tick + 'left: 0',
+      tickR: tick + 'right: 0',
+      isKo: lang === 'ko', isEn: lang === 'en',
+      koStyle: lang === 'ko' ? on : off,
+      enStyle: lang === 'en' ? on : off,
+      setKo: function () { self.setState({ lang: 'ko' }); },
+      setEn: function () { self.setState({ lang: 'en' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

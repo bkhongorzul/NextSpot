@@ -1,4 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Korean (default). The language follows the car's system setting; English is in values-en. -->
 <resources>
     <string name="app_name">NextSpot</string>
+
+    <!-- start screen -->
+    <string name="start_demo">한 화면 시연</string>
+    <string name="start_real">실제 시작</string>
+    <string name="start_safety">주행 중에는 화면 대신 음성으로만 묻고 답해요</string>
+    <string name="role_title">어느 차로 시작할까요?</string>
+    <string name="role_leaving">나가는 차 (Car A)</string>
+    <string name="role_searching">찾는 차 (Car B)</string>
+
+    <!-- demo screen -->
+    <string name="demo_title">한 화면 시연</string>
+    <string name="demo_back">처음 화면으로</string>
+    <string name="now">지금</string>
+    <string name="ready">대기 중</string>
+    <string name="idle_hint">아래 시연 조작에서 재생을 누르거나, 차 신호를 하나씩 보내 보세요.</string>
+    <string name="just">방금</string>
+    <string name="log_all">기록 전체 보기</string>
+    <string name="log_close">기록 닫기</string>
+    <string name="presenter">시연 조작</string>
+    <string name="play">정상 흐름 재생</string>
+    <string name="pause">멈춤</string>
+    <string name="play_cancelled">출발 취소 흐름 재생</string>
+    <string name="reset">처음부터</string>
+    <string name="signals_open">차 신호 직접 보내기</string>
+    <string name="signals_sub">실제 차에서는 자동으로 들어오는 신호예요</string>
+    <string name="sdk_title">연동 정보 (SDK)</string>
+
+    <string name="leaving_car">나가는 차</string>
+    <string name="searching_car">찾는 차</string>
+    <string name="next_spot">NextSpot</string>
+
+    <string name="offer">%1$dm 앞에 곧 자리가 납니다. 갈까요?</string>
+    <string name="voice_hint">운전자는 “네” 또는 “아니요”라고 말하면 돼요</string>
+    <string name="voice_listening">듣고 있어요. “네” 또는 “아니요”라고 말해 주세요</string>
+    <string name="yes">네</string>
+    <string name="no">아니요</string>
+    <string name="talk">말하기</string>
+    <string name="talking">듣는 중</string>
+    <string name="points">나가는 차 포인트</string>
+    <string name="total">총 %1$d</string>
+
+    <string name="tag_likely">곧 빔</string>
+    <string name="tag_reserved">예약됨</string>
+    <string name="tag_free">빔</string>
+    <string name="tag_parked">주차함</string>
+    <string name="tag_cancelled">취소</string>
+    <string name="bay_accessible">장애인 전용</string>
+    <string name="bay_ev">전기차 충전</string>
+
+    <string name="step1_title">자리 찾기 시작</string>
+    <string name="step1_caption">찾는 차가 근처 빈자리를 기다려요. 주차장은 지금 꽉 차 있어요.</string>
+    <string name="step2_title">나갈 차 감지</string>
+    <string name="step2_caption">나가는 차가 문을 여닫고 내비 목적지를 정했어요. 그 자리를 곧 빌 자리로 등록했어요.</string>
+    <string name="step3_title">음성으로 제안</string>
+    <string name="step3_caption">찾는 차가 “네”라고 답했어요. 이 자리는 찾는 차에게 예약되고, 내비가 그 자리로 안내해요.</string>
+    <string name="step4_title">출발 확정</string>
+    <string name="step4_caption">나가는 차가 주차 브레이크를 풀고 출발했어요. 이제 자리가 확실히 비었어요.</string>
+    <string name="step5_title">주차 완료</string>
+    <string name="step5_caption">찾는 차가 바로 그 자리에 주차했어요. 자리를 넘겨준 차는 포인트 1점을 받아요.</string>
+    <string name="cancelled_title">출발 취소</string>
+    <string name="cancelled_caption">나가는 차가 출발하지 않았어요. 제안을 자동으로 거두고, 찾는 차는 다른 자리를 찾아요.</string>
+
+    <string name="sig_search">자리 찾기 시작</string>
+    <string name="sig_door">문 열고 닫기</string>
+    <string name="sig_nav">내비 목적지 설정</string>
+    <string name="sig_brake">주차 브레이크 해제</string>
+    <string name="sig_park">주차 완료</string>
+    <string name="sig_cancel">출발 안 함</string>
+
+    <!-- record lines (used by DemoEngine) -->
+    <string name="log_ready">시연 준비 완료</string>
+    <string name="log_reset">처음부터 다시 시작</string>
+    <string name="log_search">자리 찾기 시작</string>
+    <string name="log_near">목적지 근처 도착, 자동으로 자리 찾기 시작 (%1$dm)</string>
+    <string name="log_door">운전석 문 열고 닫음</string>
+    <string name="log_belt">운전석 안전벨트 착용</string>
+    <string name="log_nav">내비 목적지 설정</string>
+    <string name="log_likely">곧 빌 자리로 등록</string>
+    <string name="log_recv">%1$dm 앞 자리 제안 받음</string>
+    <string name="log_say">음성 안내 “%1$dm 앞에 곧 자리가 납니다. 갈까요?”</string>
+    <string name="log_yes">운전자가 “네”라고 답함</string>
+    <string name="log_yes_auto">운전자가 “네”라고 답함 (자동 재생)</string>
+    <string name="log_heard_yes">운전자가 “%1$s”라고 답함, 수락</string>
+    <string name="log_heard_no">운전자가 “%1$s”라고 답함, 거절</string>
+    <string name="log_heard_unknown">못 알아들었어요. 다시 말하거나 버튼을 눌러 주세요</string>
+    <string name="log_listening">듣는 중 (“네” / “아니요”)</string>
+    <string name="log_voice_unavailable">음성 인식을 쓸 수 없어요. 버튼으로 답해 주세요</string>
+    <string name="log_matched">찾는 차에게 자리 예약</string>
+    <string name="log_guide">내비 목적지를 그 자리로 변경</string>
+    <string name="log_taken_by_other">다른 차가 먼저 가져감</string>
+    <string name="log_no">운전자가 “아니요”라고 답함, 계속 찾는 중</string>
+    <string name="log_brake">주차 브레이크 해제</string>
+    <string name="log_spot_confirmed">자리 확정</string>
+    <string name="log_confirmed">출발 확정</string>
+    <string name="log_park">그 자리에 주차</string>
+    <string name="log_taken">자리 넘겨주기 완료, 나가는 차 포인트 +1</string>
+    <string name="log_cancel">출발하지 않음</string>
+    <string name="log_withdrawn">제안 자동 취소</string>
+    <string name="log_bcancel">음성 안내 “자리가 취소됐어요. 다른 자리를 찾을게요.”</string>
+    <string name="log_thanks">음성 안내 “자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”</string>
 </resources>
