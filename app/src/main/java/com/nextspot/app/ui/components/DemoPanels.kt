@@ -1,11 +1,13 @@
 package com.nextspot.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,13 +30,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nextspot.app.R
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.sin
 import com.nextspot.app.ui.DemoEngine
 import com.nextspot.app.ui.DemoEngine.Phase
 import com.nextspot.app.ui.theme.NsColors
@@ -76,6 +85,7 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                         NsColors.surfaceHigh, NsColors.text, NsType.yesNo, padH = 0.dp,
                     )
                 }
+                VoiceWave(ui.listening)
             }
         } else {
             val (title, caption) = nowText(ui.phase)
@@ -110,19 +120,55 @@ private fun nowText(p: Phase): Pair<String, String> = when (p) {
 /** Mic icon + the hint. While the microphone is open the icon pulses and the hint says so. */
 @Composable
 private fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
-    val pulse by rememberInfiniteTransition(label = "mic").animateFloat(
+    // only runs while listening, and is read while drawing (no recomposition per frame)
+    val pulse = if (listening) rememberInfiniteTransition(label = "mic").animateFloat(
         0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulse",
-    )
+    ) else null
     // Voice is the main way to answer; touching this line opens the microphone again (e.g. if it missed the answer).
     Row(
         Modifier.clip(NsShape.button).clickable(enabled = !listening, role = Role.Button, onClick = onTalk),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        NsMic(NsColors.main, 28.dp, Modifier.alpha(if (listening) pulse else 1f))
+        NsMic(NsColors.main, 28.dp, Modifier.graphicsLayer { alpha = pulse?.value ?: 1f })
         Text(
             stringResource(if (listening) R.string.voice_listening else R.string.voice_hint),
             style = NsType.body, color = if (listening) NsColors.text else NsColors.text2,
         )
+    }
+}
+
+/**
+ * Sound-bar animation under the answer buttons: it moves while the microphone is open
+ * ("the car is listening") and rests as a flat dotted line otherwise. The motion is only read
+ * while drawing, so it does not recompose the screen.
+ */
+@Composable
+private fun VoiceWave(listening: Boolean, modifier: Modifier = Modifier) {
+    val bars = 30
+    val t = if (listening) {
+        rememberInfiniteTransition(label = "wave").animateFloat(
+            0f, 1f, infiniteRepeatable(tween(1400, easing = LinearEasing)), label = "t",
+        )
+    } else null
+    Canvas(modifier.fillMaxWidth().height(56.dp)) {
+        val u = 1.dp.toPx()
+        val gap = size.width / bars
+        val barW = 6 * u
+        for (i in 0 until bars) {
+            val x = gap * (i + 0.5f)
+            val h = if (t == null) 6 * u else {
+                // two travelling waves of different speed, shaped by a soft envelope (loud in the middle)
+                val ph = t.value * 2f * PI.toFloat()
+                val a = sin(ph + i * 0.55f)
+                val b = sin(2f * ph + i * 0.9f + 1.3f)
+                val env = 0.35f + 0.65f * sin(PI.toFloat() * (i + 0.5f) / bars)
+                (8f + 40f * abs(0.65f * a + 0.35f * b) * env) * u
+            }
+            drawRoundRect(
+                if (t == null) NsColors.text3 else NsColors.main,
+                Offset(x - barW / 2, (size.height - h) / 2), Size(barW, h), CornerRadius(barW / 2),
+            )
+        }
     }
 }
 
@@ -224,20 +270,27 @@ internal fun RecordPanel(log: List<DemoEngine.LogItem>, modifier: Modifier = Mod
 
 /** The quiet strip at the bottom: play, play the cancelled flow, start over, and the manual signals toggle. */
 @Composable
-internal fun DemoStrip(ui: DemoUi, act: DemoActions, signalsOpen: Boolean, onToggleSignals: () -> Unit, modifier: Modifier = Modifier) {
+internal fun DemoStrip(
+    ui: DemoUi, act: DemoActions, playingCancel: Boolean, onPlay: (cancelCase: Boolean) -> Unit,
+    signalsOpen: Boolean, onToggleSignals: () -> Unit, modifier: Modifier = Modifier,
+) {
+    val playingNormal = ui.autoPlaying && !playingCancel
+    val playingCancelled = ui.autoPlaying && playingCancel
     Row(
         modifier.fillMaxWidth().height(NsDims.stripH).background(NsColors.strip).padding(horizontal = NsDims.sidePad),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.presenter), style = NsType.tag.copy(fontWeight = FontWeight.Normal), color = NsColors.text2, modifier = Modifier.padding(end = 12.dp), maxLines = 1)
+        // the button of the flow that is playing turns into "pause"; the other one starts its own flow
         NsButton(
-            stringResource(if (ui.autoPlaying) R.string.pause else R.string.play),
-            { if (ui.autoPlaying) act.onStop() else act.onPlay(false) },
-            icon = { NsIcon(if (ui.autoPlaying) NsPaths.PAUSE else NsPaths.PLAY, NsColors.text, 22.dp, filled = true) },
+            stringResource(if (playingNormal) R.string.pause else R.string.play),
+            { if (playingNormal) act.onStop() else onPlay(false) },
+            icon = { NsIcon(if (playingNormal) NsPaths.PAUSE else NsPaths.PLAY, NsColors.text, 22.dp, filled = true) },
         )
         NsButton(
-            stringResource(R.string.play_cancelled), { act.onPlay(true) },
-            icon = { NsIcon(NsPaths.PLAY, NsColors.text, 22.dp, filled = true) },
+            stringResource(if (playingCancelled) R.string.pause else R.string.play_cancelled),
+            { if (playingCancelled) act.onStop() else onPlay(true) },
+            icon = { NsIcon(if (playingCancelled) NsPaths.PAUSE else NsPaths.PLAY, NsColors.text, 22.dp, filled = true) },
         )
         NsButton(
             stringResource(R.string.reset), act.onReset,

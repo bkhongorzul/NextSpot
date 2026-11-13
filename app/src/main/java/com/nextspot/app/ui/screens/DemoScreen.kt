@@ -82,6 +82,7 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
 internal fun DemoContent(ui: DemoUi, act: DemoActions, startRecordOpen: Boolean = false, startSignalsOpen: Boolean = false) {
     var recordOpen by remember { mutableStateOf(startRecordOpen) }
     var signalsOpen by remember { mutableStateOf(startSignalsOpen) }
+    var playingCancel by remember { mutableStateOf(false) }   // which flow was started last (for its pause button)
 
     NsWindow {
         Column(Modifier.fillMaxSize()) {
@@ -111,7 +112,10 @@ internal fun DemoContent(ui: DemoUi, act: DemoActions, startRecordOpen: Boolean 
             }
         }
 
-        DemoStrip(ui, act, signalsOpen, { signalsOpen = !signalsOpen }, Modifier.align(Alignment.BottomCenter))
+        DemoStrip(
+            ui, act, playingCancel, { cancel -> playingCancel = cancel; act.onPlay(cancel) },
+            signalsOpen, { signalsOpen = !signalsOpen }, Modifier.align(Alignment.BottomCenter),
+        )
         if (signalsOpen) {
             SignalsPopover(ui, act, Modifier.align(Alignment.BottomEnd).padding(end = NsDims.sidePad, bottom = 116.dp))
         }

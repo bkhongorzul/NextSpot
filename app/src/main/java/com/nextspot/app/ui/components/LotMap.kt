@@ -28,6 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -158,21 +164,41 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
     val showRoute = phase == Phase.RESERVED || phase == Phase.CONFIRMED
 
     Box(modifier.size(NsDims.mapW, NsDims.mapH).clip(NsShape.button).background(NsColors.screen)) {
-        // lines: bays, lane, the handed-over bay and the route
-        Canvas(Modifier.fillMaxSize()) {
+        // Layer 1 (never changes): bay lines, lane, parked cars. Cached as one layer, so while cars
+        // move it is not drawn again. Parked cars are drawn as images with alpha, not as 13 separate views.
+        val parked = ImageBitmap.imageResource(R.drawable.car_parked)
+        Canvas(Modifier.fillMaxSize().graphicsLayer { }) {
             val u = 1.dp.toPx()
             val line = NsColors.surfaceHigh
             for (k in 0..6) {
                 val x = (NsDims.bayX0 + NsDims.bayStep * k) * u
                 for (top in listOf(NsDims.bayTop, NsDims.bayBottomRow)) {
-                    drawRect(line, Offset(x, top * u), androidx.compose.ui.geometry.Size(3 * u, 240 * u))
-                    if (k == 6) drawRect(line, Offset(x + 129 * u, top * u), androidx.compose.ui.geometry.Size(3 * u, 240 * u))
+                    drawRect(line, Offset(x, top * u), Size(3 * u, 240 * u))
+                    if (k == 6) drawRect(line, Offset(x + 129 * u, top * u), Size(3 * u, 240 * u))
                 }
             }
             drawLine(
                 NsColors.surface, Offset(40 * u, 501.5f * u), Offset(1040 * u, 501.5f * u), 3 * u,
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(9 * u, 9 * u)),
             )
+            val src = IntSize(parked.width, parked.height)
+            val dst = IntSize((64 * u).roundToInt(), (161 * u).roundToInt())
+            for (k in 0..6) {
+                val x = NsDims.bayX0 + NsDims.bayStep * k + 37
+                if (k != NsDims.handoverBay) {
+                    drawImage(parked, IntOffset.Zero, src, IntOffset((x * u).roundToInt(), ((NsDims.bayTop + 38) * u).roundToInt()), dst, alpha = 0.42f)
+                }
+                val cx = (x + 32) * u
+                val cy = (NsDims.bayBottomRow + 38 + 80.5f) * u
+                rotate(180f, Offset(cx, cy)) {
+                    drawImage(parked, IntOffset.Zero, src, IntOffset((x * u).roundToInt(), ((NsDims.bayBottomRow + 38) * u).roundToInt()), dst, alpha = 0.42f)
+                }
+            }
+        }
+
+        // Layer 2 (changes with the phase): the handed-over bay's lines and the route
+        Canvas(Modifier.fillMaxSize()) {
+            val u = 1.dp.toPx()
             if (look != null) {
                 val w = look.width * u
                 bayEdge(lineColor, (606 + look.width / 2) * u, w, look.dashed, u)
@@ -184,24 +210,6 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                 if (hx < 675f) drawLine(NsColors.main, Offset(hx * u, 620 * u), Offset(675 * u, 620 * u), 6 * u, pathEffect = dash)
                 drawLine(NsColors.main, Offset(672 * u, 290 * u), Offset(672 * u, 620 * u), 6 * u, pathEffect = dash)
             }
-        }
-
-        // parked cars (a full lot), and the words under two special bays
-        for (k in 0..6) {
-            val x = NsDims.bayX0 + NsDims.bayStep * k
-            if (k != NsDims.handoverBay) {
-                Image(
-                    painterResource(R.drawable.car_parked), null,
-                    Modifier.offset((x + 37).dp, (NsDims.bayTop + 38).dp).size(64.dp, 161.dp).alpha(0.42f),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-            Image(
-                painterResource(R.drawable.car_parked), null,
-                Modifier.offset((x + 37).dp, (NsDims.bayBottomRow + 38).dp).size(64.dp, 161.dp)
-                    .graphicsLayer { rotationZ = 180f }.alpha(0.42f),
-                contentScale = ContentScale.FillBounds,
-            )
         }
 
         // status word next to the handed-over bay
