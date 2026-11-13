@@ -43,6 +43,8 @@ import com.nextspot.app.ui.components.CarButton
 import com.nextspot.app.ui.components.CarCard
 import com.nextspot.app.ui.components.CarPage
 import com.nextspot.app.ui.components.VoiceHint
+import com.nextspot.app.ui.components.NsButton
+import com.nextspot.app.ui.theme.NsDims
 import com.nextspot.app.ui.components.VoiceWave
 import com.nextspot.app.ui.theme.NsShape
 import androidx.compose.animation.animateColorAsState
@@ -74,7 +76,10 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     val declined = remember { mutableStateListOf<String>() }
     val announced = remember { mutableStateListOf<String>() }
     var accepted by remember { mutableStateOf<Spot?>(null) }
-    var message by remember { mutableStateOf("목적지 근처에 가면 자리를 찾아요 · Searching starts near the destination") }
+    var title by remember { mutableStateOf("목적지로 이동 중") }
+    var message by remember { mutableStateOf("목적지 근처에 가면 자리를 찾아요") }
+    var searchNote by remember { mutableStateOf("근처 자리를 기다리는 중…") }
+    var refused by remember { mutableStateOf(false) }   // the driver said "아니요" to the offer
 
     DisposableEffect(Unit) {
         navigator.start()
@@ -110,7 +115,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
             repo.listenSpot(it) { s ->
                 if (s != null && s.status == SpotStatus.WITHDRAWN) {
                     speaker.say("자리가 취소됐어요. 다른 자리를 찾을게요.")
-                    message = "자리 취소됨, 다시 찾는 중 · Spot cancelled, searching again"
+                    searchNote = "자리가 취소돼서 다시 찾는 중이에요"
                     accepted = null
                 } else if (s != null && s.status == SpotStatus.MATCHED) {
                     accepted = s   // keep the latest copy (e.g. confirmed = true)
@@ -120,26 +125,26 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         onDispose { reg?.remove() }
     }
 
-    CarPage(stringResource(R.string.searching_car) + " \u00b7 Car B", onBack) {
+    CarPage(stringResource(R.string.searching_car), onBack) {
         Column(Modifier.fillMaxWidth().widthIn(max = 1100.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             val acc = accepted
             when {
                 acc != null -> {
                     CarCard(
-                        "안내 중 · Guiding you",
-                        "${acc.metersFromCarB()} m 앞 자리로 이동 중",
+                        "안내 중",
+                        "${acc.metersFromCarB()}m 앞 자리로 이동 중",
                     )
                     Text(
-                        if (acc.confirmed) "앞차 출발 확정 · Car A is leaving now"
-                        else "앞차 출발 준비 중 · Car A getting ready",
+                        if (acc.confirmed) "앞차가 출발했어요" else "앞차가 출발을 준비하고 있어요",
                         style = NsType.caption, color = NsColors.text2,
                     )
                     CarButton(
-                        "주차했어요 · I parked",
+                        "주차했어요",
                         {
                             repo.markTaken(acc)
                             speaker.say("주차 완료. 감사합니다.")
-                            message = "주차 완료 · Parked"
+                            message = "주차를 완료했어요"
+                            title = "주차 완료"
                             accepted = null
                             searching = false
                         },
@@ -148,29 +153,26 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 }
 
                 offer != null -> {
+                    // same look as the voice offer of the one-screen demo: question, mic hint, yes / no, sound bars.
                     // likely = "might open" (yellow), confirmed = "leaving now" (green): the change must be visible
                     val confirmedNow = offer.status == SpotStatus.CONFIRMED || offer.confirmed
-                    CarCard(
-                        "${offer.metersFromCarB()} m 앞 · ${offer.metersFromCarB()} m ahead",
-                        if (confirmedNow) "자리가 확정됐어요" else "곧 자리가 날 것 같아요",
-                    )
                     OfferBadge(confirmedNow)
-                    // voice offer: the driver answers by voice in the car; the buttons stand in here
-                    // TODO(zol): connect Platform.voiceInput(context).listen(...) here -
-                    //   YES -> same as the "Yes" button (repo.accept), NO -> declined.add(offer.id),
-                    //   UNKNOWN -> ask again; start listening after the TTS offer ends; pass listening = true while the mic is open
-                    VoiceHint(listening = false, onTalk = { /* TODO(zol): open the microphone again */ })
-                    VoiceWave(listening = false)
                     Text(
-                        "실차에서는 음성으로 수락 · In the car, the driver accepts by voice",
-                        style = NsType.caption, color = NsColors.text3,
+                        stringResource(R.string.offer, offer.metersFromCarB()),
+                        style = NsType.nowQuestion.copy(lineBreak = NsType.keepAll), color = NsColors.text,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CarButton(
-                            "응, 갈게 · Yes",
+                    // TODO(zol): connect Platform.voiceInput(context).listen(...) here -
+                    //   YES -> same as the "네" button (repo.accept), NO -> same as "아니요" (declined.add + refused = true),
+                    //   UNKNOWN -> ask again; start listening after the TTS offer ends;
+                    //   pass listening = true while the microphone is open; onTalk opens the microphone again
+                    VoiceHint(listening = false, onTalk = { })
+                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        NsButton(
+                            stringResource(R.string.yes),
                             {
                                 repo.accept(offer.id, CAR_B_ID) { ok ->
                                     if (ok) {
+                                        refused = false
                                         accepted = offer
                                         navigator.navigateTo(offer.lat, offer.lng, "NextSpot 주차 자리")
                                         speaker.say("그 자리로 안내할게요.")
@@ -180,29 +182,42 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                                     }
                                 }
                             },
-                            Modifier.weight(1f), primary = true,
+                            Modifier.weight(1f), NsDims.bigButtonH,
+                            NsColors.main, NsColors.onMain, NsType.yesNo, padH = 0.dp,
                         )
-                        CarButton("아니 · No", { declined.add(offer.id) }, Modifier.weight(1f))
+                        NsButton(
+                            stringResource(R.string.no),
+                            { declined.add(offer.id); refused = true },
+                            Modifier.weight(1f), NsDims.bigButtonH,
+                            NsColors.surfaceHigh, NsColors.text, NsType.yesNo, padH = 0.dp,
+                        )
                     }
+                    VoiceWave(listening = false)
                 }
 
-                searching -> CarCard("찾는 중 · Searching", "근처 자리를 기다리는 중…")
+                searching && refused -> {
+                    // "No": say it clearly and offer to search again (same idea as the demo's closing card)
+                    CarCard("제안을 거절했어요", "다른 자리가 나면 알려 드릴게요")
+                    CarButton(
+                        "다시 찾기",
+                        { declined.clear(); refused = false; searchNote = "근처 자리를 기다리는 중…" },
+                        Modifier.fillMaxWidth(), primary = true,
+                    )
+                }
+
+                searching -> CarCard("자리 찾는 중", searchNote)
 
                 else -> {
-                    CarCard("목적지로 이동 중 · Driving to destination", message)
+                    CarCard(title, message)
                     // Search starts by itself near the destination (or by voice) - not by a "find parking" button.
-                    // SIMULATOR: this button stands in for the navigation arrival event.
+                    // Simulator: this button stands in for the navigation arrival event.
                     // TODO: in the real car replace with the NaviHelper arrival event:
                     //   Platform.carContext(context).start(onNearDestination = { searching = true }, onPosition = { _, _ -> })
                     //   (pleos threshold is NEAR_DESTINATION_M = 500)
                     // TODO(zol): second start path - the driver asks by voice ("주차할 곳 찾아줘") -> searching = true
                     //   (needs a keyword in VoiceInput.listen)
-                    Text(
-                        "SIMULATOR · 실차에서는 내비 도착 이벤트로 자동 시작 · In the car: starts automatically on navigation arrival",
-                        style = NsType.caption, color = NsColors.text2,
-                    )
                     CarButton(
-                        "목적지 500m 전 도착 · Arrive 500 m from destination",
+                        "목적지 500m 전 도착",
                         {
                             searching = true
                             speaker.say("근처 주차 자리를 찾을게요.")
@@ -224,7 +239,7 @@ private fun OfferBadge(confirmed: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            if (confirmed) "출발 확정 · Confirmed" else "곧 빌 가능성 · Likely opening",
+            if (confirmed) "출발 확정" else "곧 빌 가능성",
             style = NsType.button, color = NsColors.onMain, maxLines = 1,
         )
     }

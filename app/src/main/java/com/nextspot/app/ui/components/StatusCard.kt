@@ -27,10 +27,10 @@ fun StatusCard(title: String, body: String) {
 }
 
 fun statusLabel(status: String?): String = when (status) {
-    "likely" -> "곧 빌 가능성 · Likely opening"
-    "confirmed" -> "출발 확정 · Confirmed"
-    "matched" -> "다음 차 배정됨 · Matched"
-    "taken" -> "자리 넘김 완료 · Handed over"
-    "withdrawn" -> "제안 철회 · Withdrawn"
-    else -> "대기 중 · Parked"
+    "likely" -> "곧 빌 가능성"
+    "confirmed" -> "출발 확정"
+    "matched" -> "다음 차 배정됨"
+    "taken" -> "자리 넘김 완료"
+    "withdrawn" -> "제안 철회"
+    else -> "주차 중"
 }

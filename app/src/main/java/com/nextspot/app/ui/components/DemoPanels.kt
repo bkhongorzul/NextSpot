@@ -151,7 +151,7 @@ private fun CarSignalList(ui: DemoUi, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SignalGroup(title: String, content: @Composable () -> Unit) {
+internal fun SignalGroup(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(title, style = NsType.small, color = NsColors.text2)
         content()
@@ -159,7 +159,7 @@ private fun SignalGroup(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SignalLine(label: String, on: Boolean) {
+internal fun SignalLine(label: String, on: Boolean) {
     val c by animateColorAsState(if (on) NsColors.text else NsColors.text3, tween(250), label = "sig")
     val pop by animateFloatAsState(if (on) 1f else 0.4f, spring(dampingRatio = 0.5f, stiffness = 400f), label = "pop")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -174,7 +174,7 @@ private fun SignalLine(label: String, on: Boolean) {
 
 /** The outcome of a group: an arrow and one line, yellow when it has happened, dim before. */
 @Composable
-private fun SignalResult(label: String, on: Boolean) {
+internal fun SignalResult(label: String, on: Boolean) {
     val c by animateColorAsState(if (on) NsColors.main else NsColors.text3, tween(250), label = "res")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(4.dp))
