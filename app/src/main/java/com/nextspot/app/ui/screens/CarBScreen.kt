@@ -240,8 +240,11 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                             Spacer(Modifier.width(22.dp))
                             Text("약 ${offer.metersFromCarB()}m 앞", style = NsType.title.copy(fontSize = 38.sp), color = NsCar.text)
                             Spacer(Modifier.weight(1f))
-                            // likely = might open, confirmed = leaving now (the change must be visible)
-                            Pill(if (confirmedNow) "출발 확정" else "곧 빌 가능성")
+                            // likely = might open, confirmed = leaving now (the change must be visible): plain yellow words
+                            Text(
+                                if (confirmedNow) "출발 확정" else "곧 비는 자리",
+                                style = NsType.bodyBold.copy(fontSize = 30.sp), color = NsCar.accent,
+                            )
                         }
                         Spacer(Modifier.height(26.dp))
                         Box(Modifier.fillMaxWidth().height(1.dp).background(NsCar.border))
@@ -263,15 +266,15 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         CenterColumn {
                             MicBadge()
-                            Text("\"네\" 라고 말해보세요", style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
+                            Text("이 자리로 갈까요?", style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
                             Spacer(Modifier.height(12.dp))
                             SubText("이 자리로 안내할게요", center = true)
                         }
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        TextLink("아니요", { declined.add(offer.id); refused = true })
+                        TextLink("네", { accept(offer) })
                         Text("·", color = NsCar.text3, style = NsType.body)
-                        TextLink("네, 안내해줘", { accept(offer) })
+                        TextLink("아니요", { declined.add(offer.id); refused = true })
                     }
                 }
             }
@@ -302,7 +305,10 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 Column(Modifier.fillMaxSize()) {
                     Spacer(Modifier.weight(1f))
                     // the distance line sits right on top of the mic card
-                    Row(Modifier.padding(start = 8.dp, bottom = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         NsIcon(NsPaths.PIN, NsCar.text2, 34.dp, strokeWidth = 1.8f)
                         Spacer(Modifier.width(16.dp))
                         Text("목적지까지 500m · 근처에서 자리를 찾아볼까요?", style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2)

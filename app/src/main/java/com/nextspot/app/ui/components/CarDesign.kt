@@ -53,20 +53,25 @@ private val SIDE = 68.dp
  * way back at the top right. [left] replaces the mark (e.g. the "320 m to destination" line).
  */
 @Composable
-internal fun CarFrame(onBack: () -> Unit, left: (@Composable () -> Unit)? = null, content: @Composable BoxScope.() -> Unit) {
+internal fun CarFrame(onBack: () -> Unit, right: (@Composable () -> Unit)? = null, content: @Composable BoxScope.() -> Unit) {
     NsTheme {
         NsWindow(NsCar.bg) {
             Column(Modifier.fillMaxSize()) {
                 Row(
-                    Modifier.fillMaxWidth().height(112.dp).padding(horizontal = SIDE),
+                    Modifier.fillMaxWidth().height(112.dp).padding(horizontal = SIDE - 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    left?.invoke()
+                    // plain way back, top left: arrow + "처음으로"
+                    Row(
+                        Modifier.clip(NsCar.shape).clickable(role = Role.Button, onClick = onBack).padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        NsIcon(NsPaths.BACK, NsCar.text2, 28.dp, strokeWidth = 2.2f)
+                        Text("처음으로", style = NsType.body.copy(fontSize = 28.sp), color = NsCar.text2)
+                    }
                     Spacer(Modifier.weight(1f))
-                    Text(
-                        "처음 화면으로", style = NsType.body, color = NsCar.text3,
-                        modifier = Modifier.clip(NsCar.shape).clickable(role = Role.Button, onClick = onBack).padding(16.dp),
-                    )
+                    right?.invoke()
                 }
                 Box(Modifier.weight(1f).fillMaxWidth().padding(start = SIDE, end = SIDE, bottom = 48.dp), content = content)
             }

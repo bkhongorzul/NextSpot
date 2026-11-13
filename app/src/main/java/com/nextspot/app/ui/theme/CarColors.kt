@@ -10,11 +10,11 @@ import androidx.compose.ui.unit.dp
  * The one-screen demo keeps using [NsColors].
  */
 object NsCar {
-    // same grey as the start screen and the one-screen demo (NsColors.appBg), so the whole app matches
-    val bg = NsColors.appBg
-    val card = Color(0xFF26272B)
-    val cardHigh = Color(0xFF313236)
-    val border = Color(0xFF3E4046)
+    // black: start screen, role pick, Car A and Car B (the one-screen demo keeps the grey NsColors.appBg)
+    val bg = Color(0xFF0A0A0D)
+    val card = Color(0xFF18181D)
+    val cardHigh = Color(0xFF202026)
+    val border = Color(0xFF2B2B32)
 
     val text = Color(0xFFFFFFFF)
     val text2 = Color(0xFFA0A0A8)

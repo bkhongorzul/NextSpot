@@ -36,6 +36,7 @@ import com.nextspot.app.ui.components.NsMic
 import com.nextspot.app.ui.components.NsPin
 import com.nextspot.app.ui.components.NsTitleBar
 import com.nextspot.app.ui.components.NsWindow
+import com.nextspot.app.ui.theme.NsCar
 import com.nextspot.app.ui.theme.NsColors
 import com.nextspot.app.ui.theme.NsDims
 import com.nextspot.app.ui.theme.NsMotion
@@ -50,7 +51,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun StartScreen(onPick: (String) -> Unit) {
     NsTheme {
-        NsWindow {
+        NsWindow(NsCar.bg) {
             Column(Modifier.fillMaxSize()) {
                 Spacer(Modifier.height(NsDims.titleBar))   // empty title bar
                 Column(
@@ -80,7 +81,7 @@ fun StartScreen(onPick: (String) -> Unit) {
 @Composable
 fun RolePickScreen(onPick: (String) -> Unit, onBack: () -> Unit) {
     NsTheme {
-        NsWindow {
+        NsWindow(NsCar.bg) {
             Column(Modifier.fillMaxSize()) {
                 NsTitleBar(stringResource(R.string.start_real), stringResource(R.string.demo_back), onBack)
                 Column(

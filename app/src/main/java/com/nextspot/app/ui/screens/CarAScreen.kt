@@ -160,16 +160,19 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize()) {
-        CarFrame(onBack) {
+        // top right: demo only (cancel the departure / start over); the real car needs neither
+        CarFrame(onBack, right = {
+            TextLink("출발 안 함", { detector.cancel(); clearSensors() }, NsCar.text3)
+            TextLink("처음부터", {
+                detector.reset()
+                clearSensors()
+                spotId = null
+                spot = null
+                reward = false
+            }, NsCar.text3)
+        }) {
           Column(Modifier.fillMaxSize()) {
-            // The four car sensors, always on screen. In the real car a cell turns yellow when the car reports the
-            // signal by itself; in the simulator a tap sends the same signal (no separate button panel).
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                SensorCell("문 열림", door, Modifier.weight(1f)) { sensors.onDoorOpenedAndClosed() }
-                SensorCell("안전벨트 착용", belt, Modifier.weight(1f)) { sensors.onSeatbeltBuckled() }
-                SensorCell("내비 목적지 설정", nav, Modifier.weight(1f)) { sensors.onNavigationSet() }
-                SensorCell("브레이크 해제", brake, Modifier.weight(1f)) { sensors.onParkingBrakeReleased() }
-            }
+            // every state keeps the same centered text; the sensors sit at the bottom
             Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 // A3 departure confirmed
@@ -210,24 +213,25 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
 
                 // A2 waiting: registered, waits for the parking brake
                 registered && a1Done -> {
-                    Column(Modifier.fillMaxSize()) {
-                        Eyebrow("대기 중")
-                        Spacer(Modifier.height(10.dp))
-                        Headline("뒤차에게 알렸어요")
-                        Spacer(Modifier.height(10.dp))
-                        SubText("출발하시면 자동으로 뒤차에게 자리를 넘겨드려요")
+                    CenterColumn {
+                        Headline("뒤차에게 알렸어요", center = true)
+                        Spacer(Modifier.height(12.dp))
+                        SubText("출발하시면 자동으로 뒤차에게 자리를 넘겨드려요", center = true)
                         Spacer(Modifier.height(36.dp))
-                        CarBox(pad = 40.dp) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(26.dp)) {
-                                CarGlyph(NsCar.accent, 48.dp)
+                        CarBox(Modifier.width(1000.dp), pad = 36.dp) {
+                            Row(
+                                Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+                            ) {
+                                CarGlyph(NsCar.accent, 44.dp)
                                 Text(
                                     if (status == SpotStatus.MATCHED) "1대의 차량이 이 자리를 기다리고 있어요"
                                     else "근처 차량에게 이 자리를 알렸어요",
-                                    style = NsType.title.copy(fontSize = 32.sp), color = NsCar.text,
+                                    style = NsType.title.copy(fontSize = 30.sp), color = NsCar.text,
                                 )
                             }
                         }
-                        Spacer(Modifier.weight(1f))
+                        Spacer(Modifier.height(36.dp))
                         HintRow(
                             "브레이크를 놓으면 출발이 확정돼요",
                             icon = { NsIcon(NsPaths.BRAKE, NsCar.text2, 34.dp, strokeWidth = 1.8f) },
@@ -237,12 +241,11 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
 
                 // A1 signal detected: door / belt, destination set (no driver action needed)
                 seat || nav || registered -> {
-                    Column(Modifier.fillMaxSize()) {
-                        Spacer(Modifier.weight(1f))
-                        Headline(if (registered) "곧 출발 준비가 됐네요" else "출발 신호를 확인하고 있어요")
-                        Spacer(Modifier.height(10.dp))
-                        SubText(if (registered) "근처에서 자리를 찾는 차에게 알릴게요" else "문, 안전벨트, 내비를 차가 알아서 확인해요")
-                        Spacer(Modifier.weight(1f))
+                    CenterColumn {
+                        Headline(if (registered) "곧 출발 준비가 됐네요" else "출발 신호를 확인하고 있어요", center = true)
+                        Spacer(Modifier.height(12.dp))
+                        SubText(if (registered) "근처에서 자리를 찾는 차에게 알릴게요" else "문, 안전벨트, 내비를 차가 알아서 확인해요", center = true)
+                        Spacer(Modifier.height(36.dp))
                         HintRow(if (registered) "주변 차량에게 자리를 알리는 중" else "신호를 기다리는 중")
                     }
                 }
@@ -256,18 +259,14 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                 }
             }
-
-            // Demo only: cancel the departure / start over (the real car needs neither)
-            Row(Modifier.align(Alignment.BottomEnd)) {
-                TextLink("출발 안 함", { detector.cancel(); clearSensors() }, NsCar.text3)
-                TextLink("처음부터", {
-                    detector.reset()
-                    clearSensors()
-                    spotId = null
-                    spot = null
-                    reward = false
-                }, NsCar.text3)
             }
+            // The four car sensors, always at the bottom. In the real car a cell turns yellow when the car reports
+            // the signal by itself; in the simulator a tap sends the same signal (no separate button panel).
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                SensorCell("문 열림", door, Modifier.weight(1f)) { sensors.onDoorOpenedAndClosed() }
+                SensorCell("안전벨트 착용", belt, Modifier.weight(1f)) { sensors.onSeatbeltBuckled() }
+                SensorCell("내비 목적지 설정", nav, Modifier.weight(1f)) { sensors.onNavigationSet() }
+                SensorCell("브레이크 해제", brake, Modifier.weight(1f)) { sensors.onParkingBrakeReleased() }
             }
           }
         }
