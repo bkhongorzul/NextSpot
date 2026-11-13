@@ -18,3 +18,6 @@ secrets.properties
 .kotlin/
 CLAUDE.md
 .claude/
+
+# Team documents: never commit
+*.pdf
