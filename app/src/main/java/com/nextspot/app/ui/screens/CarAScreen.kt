@@ -3,15 +3,14 @@ package com.nextspot.app.ui.screens
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
@@ -25,11 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.nextspot.app.R
+import androidx.compose.ui.unit.sp
 import com.nextspot.app.car.CarSignals
 import com.nextspot.app.car.DepartureDetector
 import com.nextspot.app.car.Platform
@@ -38,25 +35,33 @@ import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
 import com.nextspot.app.data.SpotStatus
-import com.nextspot.app.ui.components.CarButton
-import com.nextspot.app.ui.components.CarCard
-import com.nextspot.app.ui.components.CarPage
-import com.nextspot.app.ui.components.NsButton
-import com.nextspot.app.ui.components.SignalGroup
-import com.nextspot.app.ui.components.SignalLine
-import com.nextspot.app.ui.components.SignalResult
-import com.nextspot.app.ui.components.statusLabel
-import com.nextspot.app.ui.theme.NsColors
-import com.nextspot.app.ui.theme.NsShape
+import com.nextspot.app.ui.components.CarBox
+import com.nextspot.app.ui.components.CarFrame
+import com.nextspot.app.ui.components.CarGlyph
+import com.nextspot.app.ui.components.CenterColumn
+import com.nextspot.app.ui.components.CheckDisc
+import com.nextspot.app.ui.components.Eyebrow
+import com.nextspot.app.ui.components.Headline
+import com.nextspot.app.ui.components.HintRow
+import com.nextspot.app.ui.components.MarkKind
+import com.nextspot.app.ui.components.NsIcon
+import com.nextspot.app.ui.components.NsPaths
+import com.nextspot.app.ui.components.Pill
+import com.nextspot.app.ui.components.SimButton
+import com.nextspot.app.ui.components.StatusMark
+import com.nextspot.app.ui.components.SubText
+import com.nextspot.app.ui.components.TextLink
+import com.nextspot.app.ui.theme.NsCar
 import com.nextspot.app.ui.theme.NsType
 import kotlinx.coroutines.delay
 
 private const val CAR_A_ID = "car-A"
 
 /**
- * Car A: the car that is leaving its parking spot.
+ * Car A: the car that is leaving its parking spot. Screens follow the design photos:
+ * waiting -> A1 signal detected -> A2 waiting for the brake -> A3 departure confirmed, or A4 cancelled.
  * In the real car there are no buttons: the car's own sensors drive everything and this screen only shows
- * which sensors fired. The simulator panel (hidden by default) stands in for the sensors.
+ * which sensors fired. The simulator row (hidden by default) stands in for the sensors.
  */
 @Composable
 fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
@@ -72,7 +77,7 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     var brake by remember { mutableStateOf(false) }
     var simOpen by remember { mutableStateOf(false) }
 
-    // the "+1 credit" overlay stays 2.5 s, then fades out
+    // the "+1 credit" card stays 2.5 s, then fades out
     LaunchedEffect(reward) {
         if (reward) { delay(2500); reward = false }
     }
@@ -138,70 +143,158 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     }
 
     val status = spot?.status
-    val likelyOn = status == SpotStatus.LIKELY || status == SpotStatus.CONFIRMED ||
+    val registered = status == SpotStatus.LIKELY || status == SpotStatus.CONFIRMED ||
         status == SpotStatus.MATCHED || status == SpotStatus.TAKEN
     val confirmedOn = status == SpotStatus.CONFIRMED || status == SpotStatus.TAKEN || spot?.confirmed == true
 
-    CarPage(stringResource(R.string.leaving_car), onBack) {
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
-                // left: what the car's sensors see and what happens to my spot
-                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    CarCard("내 자리 상태", statusLabel(status))
-                    Column(Modifier.padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SignalGroup(stringResource(R.string.sigs_group1)) {
-                            SignalLine(stringResource(R.string.sigs_seat), seat)
-                            SignalLine(stringResource(R.string.sigs_nav), nav)
-                            SignalResult(stringResource(R.string.sigs_result1), likelyOn)
-                        }
-                        SignalGroup(stringResource(R.string.sigs_group2)) {
-                            SignalLine(stringResource(R.string.sigs_brake), brake)
-                            SignalResult(stringResource(R.string.sigs_result2), confirmedOn)
+    // A1 stays on screen for a moment after the spot is registered, so the detected signals can be read
+    var a1Done by remember { mutableStateOf(false) }
+    LaunchedEffect(registered) {
+        if (registered) { delay(2000); a1Done = true } else a1Done = false
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        CarFrame(onBack) {
+            when {
+                // A3 departure confirmed
+                confirmedOn -> {
+                    CenterColumn {
+                        StatusMark(MarkKind.FILLED)
+                        Spacer(Modifier.height(36.dp))
+                        Headline("출발이 확정됐어요", center = true)
+                        Spacer(Modifier.height(12.dp))
+                        SubText("뒤차에게 자리 안내를 시작했어요", center = true)
+                        Spacer(Modifier.height(36.dp))
+                        Pill(
+                            when (status) {
+                                SpotStatus.TAKEN -> "자리 전달 완료"
+                                SpotStatus.MATCHED -> "뒤차가 오고 있어요"
+                                else -> "뒤차를 기다리는 중"
+                            },
+                        )
+                        if (credits > 0) {
+                            Spacer(Modifier.height(20.dp))
+                            Text("크레딧 $credits", style = NsType.body, color = NsCar.text3)
                         }
                     }
-                    Text("크레딧 $credits", style = NsType.body, color = NsColors.text2)
-                    Spacer(Modifier.weight(1f))
-                    // simulator: only for the demo, closed by default
-                    NsButton(
-                        if (simOpen) "시뮬레이터 닫기" else stringResource(R.string.signals_open),
-                        { simOpen = !simOpen },
-                    )
                 }
+
+                // A4 cancelled: the driver did not really leave (45 s without the brake, or "출발 안 함")
+                status == SpotStatus.WITHDRAWN && !seat && !nav -> {
+                    CenterColumn {
+                        StatusMark(MarkKind.CANCEL)
+                        Spacer(Modifier.height(36.dp))
+                        Headline("출발이 취소됐어요", center = true)
+                        Spacer(Modifier.height(12.dp))
+                        SubText("다시 주차하신 것 같아요 · 자리 안내를 중단했어요", center = true)
+                        Spacer(Modifier.height(36.dp))
+                        Pill("안내 중단됨", cancel = true)
+                    }
+                }
+
+                // A2 waiting: registered, waits for the parking brake
+                registered && a1Done -> {
+                    Column(Modifier.fillMaxSize()) {
+                        Eyebrow("대기 중")
+                        Spacer(Modifier.height(10.dp))
+                        Headline("뒤차에게 알렸어요")
+                        Spacer(Modifier.height(10.dp))
+                        SubText("출발하시면 자동으로 뒤차에게 자리를 넘겨드려요")
+                        Spacer(Modifier.height(36.dp))
+                        CarBox(pad = 40.dp) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(26.dp)) {
+                                CarGlyph(NsCar.accent, 48.dp)
+                                Text(
+                                    if (status == SpotStatus.MATCHED) "1대의 차량이 이 자리를 기다리고 있어요"
+                                    else "근처 차량에게 이 자리를 알렸어요",
+                                    style = NsType.title.copy(fontSize = 32.sp), color = NsCar.text,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.weight(1f))
+                        HintRow(
+                            "브레이크를 놓으면 출발이 확정돼요",
+                            icon = { NsIcon(NsPaths.BRAKE, NsCar.text2, 34.dp, strokeWidth = 1.8f) },
+                        )
+                    }
+                }
+
+                // A1 signal detected: door + seat, destination set (no driver action needed)
+                seat || nav || registered -> {
+                    Column(Modifier.fillMaxSize()) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                            SignalCard("운전석 탑승 감지", seat, Modifier.weight(1f))
+                            SignalCard("내비 목적지 설정", nav, Modifier.weight(1f))
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Headline(if (registered) "곧 출발 준비가 됐네요" else "출발 신호를 확인하고 있어요")
+                        Spacer(Modifier.height(10.dp))
+                        SubText(if (registered) "근처에서 자리를 찾는 차에게 알릴게요" else "문, 안전벨트, 내비를 차가 알아서 확인해요")
+                        Spacer(Modifier.weight(1f))
+                        HintRow(if (registered) "주변 차량에게 자리를 알리는 중" else "신호를 기다리는 중")
+                    }
+                }
+
+                // nothing yet: parked, waiting for the first signal
+                else -> {
+                    CenterColumn {
+                        Headline("주차 중이에요", center = true)
+                        Spacer(Modifier.height(12.dp))
+                        SubText("출발 신호를 기다리고 있어요", center = true)
+                    }
+                }
+            }
+
+            // Simulator: stands in for the car's sensors (the real car sends these by itself). Closed by default.
+            Column(Modifier.align(Alignment.BottomEnd), horizontalAlignment = Alignment.End) {
                 if (simOpen) {
-                    // right: buttons that stand in for the sensors (the real car sends these by itself)
-                    Column(Modifier.width(760.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(stringResource(R.string.signals_sub), style = NsType.body, color = NsColors.text2)
-                        CarButton(stringResource(R.string.sig_door), { sensors.onDoorOpenedAndClosed() }, Modifier.fillMaxWidth())
-                        CarButton(stringResource(R.string.sig_nav), { sensors.onNavigationSet() }, Modifier.fillMaxWidth())
-                        CarButton(stringResource(R.string.sig_brake), { sensors.onParkingBrakeReleased() }, Modifier.fillMaxWidth())
-                        Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            CarButton(stringResource(R.string.sig_cancel), { detector.cancel(); clearSensors() }, Modifier.weight(1f))
-                            CarButton(stringResource(R.string.reset), {
-                                detector.reset()
-                                clearSensors()
-                                spotId = null
-                                spot = null
-                                reward = false
-                            }, Modifier.weight(1f))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SimButton("문 열고 닫기") { sensors.onDoorOpenedAndClosed() }
+                        SimButton("내비 설정") { sensors.onNavigationSet() }
+                        SimButton("브레이크 해제") { sensors.onParkingBrakeReleased() }
+                        SimButton("출발 안 함") { detector.cancel(); clearSensors() }
+                        SimButton("처음부터") {
+                            detector.reset()
+                            clearSensors()
+                            spotId = null
+                            spot = null
+                            reward = false
                         }
                     }
                 }
+                TextLink(if (simOpen) "시뮬레이터 닫기" else "시뮬레이터 · 차 신호 직접 보내기", { simOpen = !simOpen }, NsCar.text3)
             }
-            androidx.compose.animation.AnimatedVisibility(
-                visible = reward,
-                modifier = Modifier.align(Alignment.Center),
-                enter = fadeIn(tween(250)),
-                exit = fadeOut(tween(500)),
-            ) {
-                Column(
-                    Modifier.clip(NsShape.button).background(NsColors.surface).padding(horizontal = 120.dp, vertical = 64.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Text("+1 크레딧", style = NsType.logo, color = NsColors.main)
-                    Text("주차 자리를 넘겨드렸어요", style = NsType.nowQuestion, color = NsColors.text)
+        }
+
+        // "+1 credit" when the spot has been taken
+        androidx.compose.animation.AnimatedVisibility(
+            visible = reward,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(tween(250)),
+            exit = fadeOut(tween(500)),
+        ) {
+            CarBox(Modifier.width(900.dp), pad = 56.dp) {
+                CenterColumn2 {
+                    Text("+1 크레딧", style = NsType.logo.copy(fontSize = 80.sp, lineHeight = 92.sp), color = NsCar.accent)
+                    Spacer(Modifier.height(10.dp))
+                    SubText("주차 자리를 넘겨드렸어요", center = true)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CenterColumn2(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) =
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, content = content)
+
+/** One detected signal: yellow check once it has fired, empty grey disc before. */
+@Composable
+private fun SignalCard(label: String, on: Boolean, modifier: Modifier = Modifier) {
+    CarBox(modifier, pad = 22.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            CheckDisc(on)
+            Text(label, style = NsType.title.copy(fontSize = 30.sp), color = if (on) NsCar.text else NsCar.text3)
         }
     }
 }
