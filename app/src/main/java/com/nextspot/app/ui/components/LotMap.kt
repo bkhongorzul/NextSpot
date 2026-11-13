@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -70,17 +71,17 @@ private fun lookOf(p: Phase): Look? = when (p) {
     else -> null
 }
 
-/** Searching car: where it goes in each phase. The time of a move comes from its distance (one speed for every car). */
-private class Leg(val x: Float)
+/** Searching car: where it goes in each phase and how many seconds that takes (DESIGN.md section 8). */
+private class Leg(val x: Float, val seconds: Float)
 
 private fun searchLeg(p: Phase): Leg? = when (p) {
-    Phase.IDLE -> Leg(120f)
-    Phase.SEARCHING -> Leg(210f)
-    Phase.LIKELY -> Leg(280f)
-    Phase.OFFER -> Leg(340f)
-    Phase.RESERVED -> Leg(460f)
-    Phase.CONFIRMED -> Leg(560f)
-    Phase.WITHDRAWN -> Leg(920f)
+    Phase.IDLE -> Leg(120f, 0f)
+    Phase.SEARCHING -> Leg(210f, 2.5f)
+    Phase.LIKELY -> Leg(280f, 2.4f)
+    Phase.OFFER -> Leg(340f, 1.6f)
+    Phase.RESERVED -> Leg(460f, 2.6f)
+    Phase.CONFIRMED -> Leg(560f, 2.4f)
+    Phase.WITHDRAWN -> Leg(920f, 3.2f)
     Phase.TAKEN -> null
 }
 
@@ -93,9 +94,10 @@ private const val BAY_Y = 168f
 internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifier, onSettled: (Phase) -> Unit = {}) {
     val look = lookOf(phase)
     val departing = phase == Phase.CONFIRMED || phase == Phase.TAKEN
-    // Constant speed: every move is linear and takes distance / speed (no slow-fast-slow per leg).
-    val ease = LinearEasing
-    fun ms(dx: Float, dy: Float) = (hypot(dx, dy) / NsMotion.carSpeed * 1000f).toInt().coerceAtLeast(1)
+    // One easing; the time of each leg is the DESIGN.md section 8 value (or distance / speed, see NsMotion).
+    val ease = if (NsMotion.constantSpeed) LinearEasing else NsMotion.drive
+    fun ms(seconds: Float, dx: Float, dy: Float) =
+        (if (NsMotion.constantSpeed) hypot(dx, dy) / NsMotion.carSpeed * 1000f else seconds * 1000f).toInt().coerceAtLeast(1)
 
     // car positions, animated with one easing and a duration per leg (steady speed)
     val bx = remember { Animatable(searchLeg(phase)?.x ?: BAY_X) }
@@ -118,16 +120,16 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
             }
             phase == Phase.TAKEN -> coroutineScope {   // two legs: in front of the bay, then into it
                 bParked = false
-                val leg1 = tween<Float>(ms(BAY_X - bx.value, 420f - by.value), easing = ease)
+                val leg1 = tween<Float>(ms(1.6f, BAY_X - bx.value, 420f - by.value), easing = ease)
                 launch { bx.animateTo(BAY_X, leg1) }
                 launch { brot.animateTo(0f, leg1) }
                 by.animateTo(420f, leg1)
-                by.animateTo(BAY_Y, tween(ms(0f, 420f - BAY_Y), easing = ease))
+                by.animateTo(BAY_Y, tween(ms(1.6f, 0f, 420f - BAY_Y), easing = ease))
                 bParked = true
                 onSettled(phase)   // the searching car is in the bay: the closing card may appear
             }
             leg != null && leg.x >= bx.value -> {   // never roll backwards (e.g. after answering "no")
-                val spec = tween<Float>(ms(leg.x - bx.value, 0f), easing = ease)
+                val spec = tween<Float>(ms(leg.seconds, leg.x - bx.value, 0f), easing = ease)
                 coroutineScope {
                     launch { by.animateTo(LANE_Y, spec) }
                     launch { brot.animateTo(90f, spec) }
@@ -146,23 +148,23 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
             return@LaunchedEffect
         }
         aMoving = true
-        ay.animateTo(370f, tween(ms(0f, 370f - BAY_Y), easing = ease))                       // back out
+        ay.animateTo(370f, tween(ms(1.3f, 0f, 370f - BAY_Y), easing = ease))                       // back out
         coroutineScope {                                                    // turn into the upper lane
-            val spec = tween<Float>(ms(830f - BAY_X, 420f - 370f), easing = ease)
+            val spec = tween<Float>(ms(1.1f, 830f - BAY_X, 420f - 370f), easing = ease)
             launch { ax.animateTo(830f, spec) }
             launch { arot.animateTo(90f, spec) }
             ay.animateTo(420f, spec)
         }
         coroutineScope {                                                    // drive off and fade
-            val spec = tween<Float>(ms(1180f - 830f, 0f), easing = ease)
+            val spec = tween<Float>(ms(1.9f, 1180f - 830f, 0f), easing = ease)
             launch { aAlpha.animateTo(0f, spec) }
             ax.animateTo(1180f, spec)
         }
     }
 
     val lineColor by animateColorAsState(look?.color ?: NsColors.surfaceHigh, tween(250), label = "bay")
-    val tagBAlpha by animateFloatAsState(if (phase == Phase.TAKEN && !bParked) 0f else 1f, tween(300), label = "tagB")
-    val tagAAlpha by animateFloatAsState(if (aMoving) 0f else 1f, tween(300), label = "tagA")
+    val tagBAlpha = animateFloatAsState(if (phase == Phase.TAKEN && !bParked) 0f else 1f, tween(300), label = "tagB")
+    val tagAAlpha = animateFloatAsState(if (aMoving) 0f else 1f, tween(300), label = "tagA")
     val showRoute = phase == Phase.RESERVED || phase == Phase.CONFIRMED
 
     Box(modifier.size(NsDims.mapW, NsDims.mapH).clip(NsShape.button).background(NsColors.screen)) {
@@ -235,11 +237,9 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
 
         // pin on the searching car: stays upright and follows the car
         Box(
-            Modifier.offset {
-                IntOffset(
-                    (bx.value - 24f).dp.roundToPx(),
-                    (by.value - (if (brot.value > 45f) 40f else 86f) - 46f).dp.roundToPx(),
-                )
+            Modifier.size(48.dp).graphicsLayer {
+                translationX = (bx.value - 24f).dp.toPx()
+                translationY = (by.value - (if (brot.value > 45f) 40f else 86f) - 46f).dp.toPx()
             }
         ) { NsPin(48.dp) }
 
@@ -262,9 +262,12 @@ private fun CarBox(
 ) {
     Box(
         Modifier
-            .offset { IntOffset((x.value - 90f).dp.roundToPx(), (y.value - 90f).dp.roundToPx()) }
             .size(180.dp)
-            .graphicsLayer { this.alpha = alpha?.value ?: 1f }
+            .graphicsLayer {   // moved while drawing: no measure / layout per frame
+                translationX = (x.value - 90f).dp.toPx()
+                translationY = (y.value - 90f).dp.toPx()
+                this.alpha = alpha?.value ?: 1f
+            }
     ) {
         Box(Modifier.offset(50.dp, 3.dp).size(80.dp, 173.dp).graphicsLayer { rotationZ = rot.value }) {
             Image(
@@ -278,15 +281,16 @@ private fun CarBox(
 
 /** Name tag: in a bay it sits at the top of the map, in the lane it sits under the car. */
 @Composable
-private fun CarTag(text: String, color: Color, x: Anim, y: Anim, rot: Anim, alpha: Float) {
+private fun CarTag(text: String, color: Color, x: Anim, y: Anim, rot: Anim, alpha: State<Float>) {
     Box(
         Modifier
-            .offset {
-                val top = if (y.value < 290f) 10f else y.value + (if (rot.value > 45f) 46f else 88f)
-                IntOffset((x.value - 90f).dp.roundToPx(), top.dp.roundToPx())
-            }
             .size(180.dp, 28.dp)
-            .alpha(alpha),
+            .graphicsLayer {
+                val top = if (y.value < 290f) 10f else y.value + (if (rot.value > 45f) 46f else 88f)
+                translationX = (x.value - 90f).dp.toPx()
+                translationY = top.dp.toPx()
+                this.alpha = alpha.value
+            },
         contentAlignment = Alignment.Center,
     ) { Text(text, style = NsType.tag, color = color, maxLines = 1, softWrap = false) }
 }
