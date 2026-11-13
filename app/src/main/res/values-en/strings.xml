@@ -44,7 +44,7 @@
 
     <string name="step1_title">Searching starts</string>
     <string name="step1_caption">The searching car waits for a nearby spot. The lot is full right now.</string>
-    <string name="step2_title">Leaving car spotted</string>
+    <string name="step2_title">Car sensors spot the departure</string>
     <string name="step2_caption">The car\u2019s own signals show it is about to go. No lot equipment needed.</string>
     <string name="step3_title">Voice offer</string>
     <string name="step3_caption">The searching driver said “yes”. The spot is reserved for them and navigation leads the way.</string>
@@ -102,8 +102,8 @@
     <string name="sigs_nav">Destination set</string>
     <string name="sigs_brake">Parking brake released</string>
     <string name="closing_done_body">The car that left earned 1 point.</string>
-    <string name="sigs_group1">Departure expected</string>
-    <string name="sigs_group2">Departure confirmed</string>
+    <string name="sigs_group1">Departure expected · car sensors</string>
+    <string name="sigs_group2">Departure confirmed · car sensors</string>
     <string name="sigs_result1">Posted as opening soon</string>
     <string name="sigs_result2">Spot confirmed</string>
     <string name="closing_retry_title">Look for an empty spot again?</string>

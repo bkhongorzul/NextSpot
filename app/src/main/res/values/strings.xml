@@ -47,7 +47,7 @@
 
     <string name="step1_title">자리 찾기 시작</string>
     <string name="step1_caption">찾는 차가 근처 빈자리를 기다려요. 주차장은 지금 꽉 차 있어요.</string>
-    <string name="step2_title">나갈 차 감지</string>
+    <string name="step2_title">차 센서로 출발 감지</string>
     <string name="step2_caption">차 신호만으로 출발을 미리 알아채요. 주차장 설비는 필요 없어요.</string>
     <string name="step3_title">음성으로 제안</string>
     <string name="step3_caption">찾는 차가 “네”라고 답했어요. 이 자리는 찾는 차에게 예약되고, 내비가 그 자리로 안내해요.</string>
@@ -106,8 +106,8 @@
     <string name="sigs_nav">내비 목적지 설정</string>
     <string name="sigs_brake">주차 브레이크 해제</string>
     <string name="closing_done_body">자리를 비워 준 차에 포인트 1점이 쌓였어요.</string>
-    <string name="sigs_group1">출발 예고</string>
-    <string name="sigs_group2">출발 확정</string>
+    <string name="sigs_group1">출발 예고 · 차량 센서</string>
+    <string name="sigs_group2">출발 확정 · 차량 센서</string>
     <string name="sigs_result1">곧 빌 자리로 등록</string>
     <string name="sigs_result2">자리 확정</string>
     <string name="closing_retry_title">다시 빈자리를 찾을까요?</string>
