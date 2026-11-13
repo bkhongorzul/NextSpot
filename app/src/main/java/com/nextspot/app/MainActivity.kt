@@ -1,5 +1,7 @@
 package com.nextspot.app
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +26,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         speaker = Platform.speaker(this)
+        // Microphone for the driver's spoken "네 / 아니요" (Car B). Without it, voice answers are skipped.
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1)
+        }
         setContent {
             NsTheme {
                 Surface(color = NsColors.appBg) {
