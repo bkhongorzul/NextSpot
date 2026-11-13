@@ -13,3 +13,8 @@ captures/
 app/google-services.json
 *.keystore
 secrets.properties
+
+# Tooling / local files
+.kotlin/
+CLAUDE.md
+.claude/
