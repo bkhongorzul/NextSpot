@@ -116,10 +116,9 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
  * What the leaving car's own signals did, in the two steps of DepartureDetector:
  *  1. seated + destination set  ->  posted as "opening soon"
  *  2. parking brake released     ->  spot confirmed
- * Lines turn on one after another, at least [REVEAL_GAP_MS] apart, so each signal can be read
- * even when the demo sends them in quick succession.
+ * A signal line turns on as soon as the signal arrives; its outcome line follows after [RESULT_DELAY_MS].
  */
-private const val REVEAL_GAP_MS = 700L
+private const val RESULT_DELAY_MS = 500L
 
 @Composable
 private fun CarSignalList(ui: DemoUi, modifier: Modifier = Modifier) {
@@ -132,15 +131,13 @@ private fun CarSignalList(ui: DemoUi, modifier: Modifier = Modifier) {
         p == Phase.CONFIRMED || p == Phase.TAKEN,
     )
     val shown = remember { mutableStateListOf(*target.toTypedArray()) }
-    var lastReveal by remember { mutableLongStateOf(0L) }
     LaunchedEffect(target) {
         for (k in target.indices) if (!target[k] && shown[k]) shown[k] = false   // a new run: back to empty
         for (k in target.indices) {
             if (target[k] && !shown[k]) {
-                val wait = REVEAL_GAP_MS - (System.currentTimeMillis() - lastReveal)
-                if (wait > 0) delay(wait)
+                // a signal is checked the moment it arrives; only the outcome line follows a little later
+                if (k == 2 || k == 4) delay(RESULT_DELAY_MS)
                 shown[k] = true
-                lastReveal = System.currentTimeMillis()
             }
         }
     }
