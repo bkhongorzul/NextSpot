@@ -61,6 +61,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.core:core-ktx:1.13.1")
+    // Compose Preview (design check in Android Studio without an emulator)
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 
     // Firebase Firestore (shared database between the two cars)
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
