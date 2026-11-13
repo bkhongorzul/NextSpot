@@ -36,8 +36,6 @@
     <string name="no">No</string>
     <string name="talk">Speak</string>
     <string name="talking">Listening</string>
-    <string name="points">leaving car points</string>
-    <string name="total">total %1$d</string>
 
     <string name="tag_likely">Opening</string>
     <string name="tag_reserved">Reserved</string>
@@ -48,7 +46,7 @@
     <string name="step1_title">Searching starts</string>
     <string name="step1_caption">The searching car waits for a nearby spot. The lot is full right now.</string>
     <string name="step2_title">Leaving car spotted</string>
-    <string name="step2_caption">The leaving car opened and closed its door and set a destination. Its spot is posted as opening soon.</string>
+    <string name="step2_caption">The leaving car’s own signals tell us it is about to go. No equipment is needed in the lot.</string>
     <string name="step3_title">Voice offer</string>
     <string name="step3_caption">The searching driver said “yes”. The spot is reserved for them and navigation leads the way.</string>
     <string name="step4_title">Departure confirmed</string>
@@ -97,8 +95,13 @@
     <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">Spot handed over</string>
+    <string name="closing_done_title">Spot connected</string>
     <string name="closing_replay">Watch again</string>
     <string name="closing_home">Back to start</string>
-    <string name="closing_cancel_body">The offer was taken back. We will guide you again next time.</string>
+    <string name="closing_cancel_body">The leaving car stayed, so the offer was withdrawn.</string>
+    <string name="sigs_title">Signals from the leaving car</string>
+    <string name="sigs_seat">Driver seated (door, seatbelt)</string>
+    <string name="sigs_nav">Destination set</string>
+    <string name="sigs_brake">Parking brake released</string>
+    <string name="closing_done_body">The car that left earned 1 point. Total %1$d points</string>
 </resources>

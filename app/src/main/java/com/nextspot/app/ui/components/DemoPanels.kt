@@ -1,6 +1,7 @@
 package com.nextspot.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -95,8 +96,35 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                     color = if (ui.phase == Phase.TAKEN) NsColors.ok else NsColors.text,
                 )
                 Text(caption, style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2)
+                // the core idea: the car itself sends these signals (no equipment in the lot)
+                if (ui.phase == Phase.SEARCHING || ui.phase == Phase.LIKELY || ui.phase == Phase.CONFIRMED) {
+                    CarSignalList(ui, Modifier.padding(top = 8.dp))
+                }
             }
         }
+    }
+}
+
+/** What the leaving car has sent so far. Each line turns on when its signal arrives. */
+@Composable
+private fun CarSignalList(ui: DemoUi, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.sigs_title), style = NsType.small, color = NsColors.text2)
+        SignalLine(stringResource(R.string.sigs_seat), ui.door || ui.belt)
+        SignalLine(stringResource(R.string.sigs_nav), ui.nav)
+        SignalLine(stringResource(R.string.sigs_brake), ui.brake)
+    }
+}
+
+@Composable
+private fun SignalLine(label: String, on: Boolean) {
+    val bg by animateColorAsState(if (on) NsColors.main else NsColors.surface, tween(200), label = "sig")
+    Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(28.dp).clip(NsShape.mark).background(bg), contentAlignment = Alignment.Center) {
+            if (on) NsIcon(NsPaths.CHECK, NsColors.onMain, 20.dp, strokeWidth = 3f, square = true)
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(label, style = if (on) NsType.bodyBold else NsType.body, color = if (on) NsColors.text else NsColors.text3, maxLines = 1)
     }
 }
 
@@ -131,35 +159,30 @@ private fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
 }
 
 /**
- * Sound-bar animation under the answer buttons: it moves while the microphone is open
- * ("the car is listening") and rests as a flat dotted line otherwise. The motion is only read
- * while drawing, so it does not recompose the screen.
+ * Live sound bars under the answer buttons: the car is waiting for the driver's voice, so the bars
+ * move for the whole voice offer, like a recording meter. While the microphone is really open
+ * ([listening]) they are brighter and taller. Motion is only read while drawing.
  */
 @Composable
 private fun VoiceWave(listening: Boolean, modifier: Modifier = Modifier) {
-    val bars = 30
-    val t = if (listening) {
-        rememberInfiniteTransition(label = "wave").animateFloat(
-            0f, 1f, infiniteRepeatable(tween(1400, easing = LinearEasing)), label = "t",
-        )
-    } else null
-    Canvas(modifier.fillMaxWidth().height(56.dp)) {
+    val t by rememberInfiniteTransition(label = "wave").animateFloat(
+        0f, 1f, infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "t",
+    )
+    val strength by animateFloatAsState(if (listening) 1f else 0.5f, tween(300), label = "strength")
+    Canvas(modifier.fillMaxWidth().height(72.dp)) {
         val u = 1.dp.toPx()
+        val bars = 36
         val gap = size.width / bars
         val barW = 6 * u
+        val ph = t * 2f * PI.toFloat()
         for (i in 0 until bars) {
-            val x = gap * (i + 0.5f)
-            val h = if (t == null) 6 * u else {
-                // two travelling waves of different speed, shaped by a soft envelope (loud in the middle)
-                val ph = t.value * 2f * PI.toFloat()
-                val a = sin(ph + i * 0.55f)
-                val b = sin(2f * ph + i * 0.9f + 1.3f)
-                val env = 0.35f + 0.65f * sin(PI.toFloat() * (i + 0.5f) / bars)
-                (8f + 40f * abs(0.65f * a + 0.35f * b) * env) * u
-            }
+            // three waves with whole-number speeds (so the loop is seamless) look like uneven live input
+            val n = 0.5f * sin(3f * ph + i * 0.9f) + 0.3f * sin(5f * ph + i * 1.7f + 1f) + 0.2f * sin(8f * ph + i * 0.4f + 2f)
+            val env = 0.3f + 0.7f * sin(PI.toFloat() * (i + 0.5f) / bars)      // louder in the middle
+            val h = (6f + 56f * abs(n) * env * strength) * u
             drawRoundRect(
-                if (t == null) NsColors.text3 else NsColors.main,
-                Offset(x - barW / 2, (size.height - h) / 2), Size(barW, h), CornerRadius(barW / 2),
+                NsColors.main.copy(alpha = 0.45f + 0.55f * strength),
+                Offset(gap * (i + 0.5f) - barW / 2, (size.height - h) / 2), Size(barW, h), CornerRadius(barW / 2),
             )
         }
     }
@@ -371,8 +394,8 @@ private fun SignalTile(t: Tile, modifier: Modifier) {
 }
 
 /**
- * Closing card over the lower part of the map, when a flow has finished: handed over (with the point)
- * or cancelled. Same place and shape for both. No measured values: only what the app really knows.
+ * Closing card, centred on the screen: one title, one line, two buttons. Nothing else.
+ * Same shape for "handed over" and "cancelled".
  */
 @Composable
 internal fun ClosingCard(
@@ -380,23 +403,18 @@ internal fun ClosingCard(
 ) {
     val done = phase == Phase.TAKEN
     Column(
-        modifier.width(760.dp).clip(NsShape.button).background(NsColors.popover).padding(40.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier.width(640.dp).clip(NsShape.button).background(NsColors.popover).padding(48.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             stringResource(if (done) R.string.closing_done_title else R.string.cancelled_title),
-            style = NsType.nowQuestion, color = if (done) NsColors.ok else NsColors.cancel,
+            style = NsType.nowQuestion, color = NsColors.text,
         )
-        if (done) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Bottom) {
-                Text("+1", style = NsType.bigPoint, color = NsColors.main)
-                Text(stringResource(R.string.points), style = NsType.step, color = NsColors.text, modifier = Modifier.padding(bottom = 4.dp))
-                Text(stringResource(R.string.total, credits), style = NsType.step, color = NsColors.text2, modifier = Modifier.padding(bottom = 4.dp))
-            }
-        } else {
-            Text(stringResource(R.string.closing_cancel_body), style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2)
-        }
-        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            if (done) stringResource(R.string.closing_done_body, credits) else stringResource(R.string.closing_cancel_body),
+            style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2,
+        )
+        Row(Modifier.padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NsButton(
                 stringResource(R.string.closing_replay), onReplay, Modifier.weight(1f), NsDims.bigButtonH,
                 NsColors.main, NsColors.onMain, NsType.yesNo, padH = 0.dp,

@@ -39,8 +39,6 @@
     <string name="no">아니요</string>
     <string name="talk">말하기</string>
     <string name="talking">듣는 중</string>
-    <string name="points">나가는 차 포인트</string>
-    <string name="total">총 %1$d</string>
 
     <string name="tag_likely">곧 빔</string>
     <string name="tag_reserved">예약됨</string>
@@ -51,7 +49,7 @@
     <string name="step1_title">자리 찾기 시작</string>
     <string name="step1_caption">찾는 차가 근처 빈자리를 기다려요. 주차장은 지금 꽉 차 있어요.</string>
     <string name="step2_title">나갈 차 감지</string>
-    <string name="step2_caption">나가는 차가 문을 여닫고 내비 목적지를 정했어요. 그 자리를 곧 빌 자리로 등록했어요.</string>
+    <string name="step2_caption">나가는 차가 보내는 신호만으로 출발을 미리 알아채요. 주차장에 따로 설비를 달 필요가 없어요.</string>
     <string name="step3_title">음성으로 제안</string>
     <string name="step3_caption">찾는 차가 “네”라고 답했어요. 이 자리는 찾는 차에게 예약되고, 내비가 그 자리로 안내해요.</string>
     <string name="step4_title">출발 확정</string>
@@ -101,8 +99,13 @@
     <string name="log_thanks">음성 안내 “자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">자리 넘김 완료</string>
+    <string name="closing_done_title">빈자리 연결 완료</string>
     <string name="closing_replay">다시 보기</string>
     <string name="closing_home">시작 화면으로</string>
-    <string name="closing_cancel_body">제안을 거뒀어요. 다음 기회에 다시 안내할게요</string>
+    <string name="closing_cancel_body">나가는 차가 떠나지 않아 제안을 거뒀어요.</string>
+    <string name="sigs_title">나가는 차가 보내는 신호</string>
+    <string name="sigs_seat">운전석 착석 (문, 안전벨트)</string>
+    <string name="sigs_nav">내비 목적지 설정</string>
+    <string name="sigs_brake">주차 브레이크 해제</string>
+    <string name="closing_done_body">자리를 비워 준 차에 1포인트가 쌓였어요. 총 %1$d포인트</string>
 </resources>

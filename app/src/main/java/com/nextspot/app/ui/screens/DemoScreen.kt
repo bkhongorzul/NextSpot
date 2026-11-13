@@ -5,6 +5,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -112,14 +116,6 @@ internal fun DemoContent(
                     Box {
                         LotMap(ui.phase, ui.offerMeters, onSettled = { settled = it })
                         if (recordOpen) RecordPanel(ui.log, Modifier.align(Alignment.BottomCenter))
-                        if (cardAlpha > 0.01f) {
-                            ClosingCard(
-                                ui.phase, ui.credits,
-                                onReplay = { play(ui.phase == DemoEngine.Phase.WITHDRAWN) }, onHome = act.onBack,
-                                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp)
-                                    .graphicsLayer { alpha = cardAlpha },
-                            )
-                        }
                     }
                     Ticker(ui.log, recordOpen, { recordOpen = !recordOpen })
                 }
@@ -138,6 +134,21 @@ internal fun DemoContent(
             ui, act, playingCancel, play,
             signalsOpen, { signalsOpen = !signalsOpen }, Modifier.align(Alignment.BottomCenter),
         )
+        // closing card: centred on the whole window, over a dimmed background
+        if (cardAlpha > 0.01f) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f * cardAlpha))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { },
+                contentAlignment = Alignment.Center,
+            ) {
+                ClosingCard(
+                    ui.phase, ui.credits,
+                    onReplay = { play(ui.phase == DemoEngine.Phase.WITHDRAWN) }, onHome = act.onBack,
+                    modifier = Modifier.graphicsLayer { alpha = cardAlpha },
+                )
+            }
+        }
         if (signalsOpen) {
             SignalsPopover(ui, act, Modifier.align(Alignment.BottomEnd).padding(end = NsDims.sidePad, bottom = 116.dp))
         }
