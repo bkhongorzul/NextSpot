@@ -106,4 +106,7 @@
     <string name="sigs_group2">Departure confirmed</string>
     <string name="sigs_result1">Posted as opening soon</string>
     <string name="sigs_result2">Spot confirmed</string>
+    <string name="closing_retry_title">Look for an empty spot again?</string>
+    <string name="closing_retry">Search again</string>
+    <string name="closing_declined_body">You declined the offer.</string>
 </resources>

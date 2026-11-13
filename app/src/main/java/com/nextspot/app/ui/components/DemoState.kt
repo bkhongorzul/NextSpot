@@ -17,6 +17,7 @@ internal data class DemoUi(
     val searching: Boolean = false,
     val accepted: Boolean = false,
     val parked: Boolean = false,
+    val declined: Boolean = false,
     val listening: Boolean = false,
     val autoPlaying: Boolean = false,
     val log: List<DemoEngine.LogItem> = emptyList(),

@@ -110,4 +110,7 @@
     <string name="sigs_group2">출발 확정</string>
     <string name="sigs_result1">곧 빌 자리로 등록</string>
     <string name="sigs_result2">자리 확정</string>
+    <string name="closing_retry_title">다시 빈자리를 찾을까요?</string>
+    <string name="closing_retry">다시 찾기</string>
+    <string name="closing_declined_body">제안을 거절했어요.</string>
 </resources>

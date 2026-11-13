@@ -448,31 +448,39 @@ private fun SignalTile(t: Tile, modifier: Modifier) {
     }
 }
 
+internal enum class ClosingKind { DONE, CANCELLED, DECLINED }
+
 /**
- * Closing card, centred on the screen: one title, one line, two buttons. Nothing else.
- * Same shape for "handed over" and "cancelled".
+ * Card centred on the screen: one title, one line, two buttons. Nothing else.
+ * Handed over: "empty spot connected". Cancelled by the leaving car, or offer declined: "search again?".
  */
 @Composable
 internal fun ClosingCard(
-    phase: Phase, onReplay: () -> Unit, onHome: () -> Unit, modifier: Modifier = Modifier,
+    kind: ClosingKind, onReplay: () -> Unit, onHome: () -> Unit, modifier: Modifier = Modifier,
 ) {
-    val done = phase == Phase.TAKEN
+    val done = kind == ClosingKind.DONE
     Column(
         modifier.width(640.dp).clip(NsShape.button).background(NsColors.popover).padding(48.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            stringResource(if (done) R.string.closing_done_title else R.string.cancelled_title),
-            style = NsType.nowQuestion, color = NsColors.text,
+            stringResource(if (done) R.string.closing_done_title else R.string.closing_retry_title),
+            style = NsType.nowQuestion.copy(lineBreak = NsType.keepAll), color = NsColors.text,
         )
         Text(
-            if (done) stringResource(R.string.closing_done_body) else stringResource(R.string.closing_cancel_body),
+            stringResource(
+                when (kind) {
+                    ClosingKind.DONE -> R.string.closing_done_body
+                    ClosingKind.CANCELLED -> R.string.closing_cancel_body
+                    ClosingKind.DECLINED -> R.string.closing_declined_body
+                }
+            ),
             style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2,
         )
         Row(Modifier.padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NsButton(
-                stringResource(R.string.closing_replay), onReplay, Modifier.weight(1f), NsDims.bigButtonH,
-                NsColors.main, NsColors.onMain, NsType.yesNo, padH = 0.dp,
+                stringResource(if (done) R.string.closing_replay else R.string.closing_retry), onReplay,
+                Modifier.weight(1f), NsDims.bigButtonH, NsColors.main, NsColors.onMain, NsType.yesNo, padH = 0.dp,
             )
             NsButton(
                 stringResource(R.string.closing_home), onHome, Modifier.weight(1f), NsDims.bigButtonH,

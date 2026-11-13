@@ -65,6 +65,7 @@ class DemoEngine(
     var listening by mutableStateOf(false); private set              // microphone open
     var accepted by mutableStateOf(false); private set
     var parked by mutableStateOf(false); private set
+    var declined by mutableStateOf(false); private set               // the driver said "no" to the offer
     var credits by mutableLongStateOf(0L); private set
     var autoPlaying by mutableStateOf(false); private set
     val log = mutableStateListOf<LogItem>()
@@ -195,13 +196,14 @@ class DemoEngine(
         openReg?.remove()
         openReg = repo.listenOpenSpots(DemoPlaces.GROUP, CAR_B) { list ->
             if (accepted || asking || parked) return@listenOpenSpots
-            val fresh = list.filter { it.updatedAt >= runStart }
+            val fresh = list.filter { it.updatedAt >= runStart && it.id !in declinedIds }
             val best = fresh.minByOrNull { metersFromB(it) } ?: return@listenOpenSpots
             offer(best)
         }
     }
 
     private var offerPending = false
+    private val declinedIds = mutableSetOf<String>()   // spots the driver said "no" to: not offered again
 
     /**
      * The spot is posted as "opening soon" at once, but the offer comes a moment later (one even beat in the auto play,
@@ -281,6 +283,8 @@ class DemoEngine(
     fun answerNo() {
         voice.stop(); listening = false
         asking = false
+        spot?.id?.let { declinedIds.add(it) }
+        declined = true
         add("Car B", str(R.string.log_no))
     }
 
@@ -302,7 +306,7 @@ class DemoEngine(
         spot = null; lastSpotStatus = null
         door = false; belt = false; nav = false; brake = false
         searching = false; asking = false; listening = false; accepted = false; parked = false
-        offerMeters = null; offerPending = false
+        offerMeters = null; offerPending = false; declined = false; declinedIds.clear()
         log.clear()
         add("시스템", str(R.string.log_reset))
         repo.clearGroup(DemoPlaces.GROUP) {

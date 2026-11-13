@@ -72,20 +72,19 @@ private fun lookOf(p: Phase): Look? = when (p) {
 }
 
 /**
- * Searching car: it waits at the start while searching, "opening soon" and the offer, drives to the spot
- * in front of the bay once the driver said yes (RESERVED), and waits there while the leaving car pulls out.
- * Cancelled: unchanged (drives on).
+ * Searching car: it moves only three times. A little forward when the search starts, a little forward after
+ * the driver said yes, and into the spot after the leaving car has gone. Everything else it waits.
  */
 private class Leg(val x: Float, val seconds: Float)
 
 private fun searchLeg(p: Phase): Leg? = when (p) {
     Phase.IDLE -> Leg(120f, 0f)
-    Phase.SEARCHING -> Leg(120f, 0f)
-    Phase.LIKELY -> Leg(120f, 0f)
-    Phase.OFFER -> Leg(120f, 0f)
-    Phase.RESERVED -> Leg(560f, 3.0f)
-    Phase.CONFIRMED -> Leg(560f, 2.4f)
-    Phase.WITHDRAWN -> Leg(920f, 3.2f)
+    Phase.SEARCHING -> Leg(220f, 2.5f)
+    Phase.LIKELY -> Leg(220f, 0f)
+    Phase.OFFER -> Leg(220f, 0f)
+    Phase.RESERVED -> Leg(340f, 2.6f)
+    Phase.CONFIRMED -> Leg(340f, 0f)
+    Phase.WITHDRAWN -> null   // cancelled: the searching car stays where it is
     Phase.TAKEN -> null
 }
 
@@ -124,7 +123,8 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
             }
             phase == Phase.TAKEN -> coroutineScope {   // two legs: in front of the bay, then into it
                 bParked = false
-                val leg1 = tween<Float>(ms(1.6f, BAY_X - bx.value, 420f - by.value), easing = ease)
+                val toFront = hypot(BAY_X - bx.value, 420f - by.value)
+                val leg1 = tween<Float>(ms(maxOf(1.6f, toFront / 150f), BAY_X - bx.value, 420f - by.value), easing = ease)
                 launch { bx.animateTo(BAY_X, leg1) }
                 launch { brot.animateTo(0f, leg1) }
                 by.animateTo(420f, leg1)
@@ -132,6 +132,7 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                 bParked = true
                 onSettled(phase)   // the searching car is in the bay: the closing card may appear
             }
+            phase == Phase.WITHDRAWN -> onSettled(phase)
             leg != null && leg.x >= bx.value -> {   // never roll backwards (e.g. after answering "no")
                 val spec = tween<Float>(ms(leg.seconds, leg.x - bx.value, 0f), easing = ease)
                 coroutineScope {
@@ -139,7 +140,6 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                     launch { brot.animateTo(90f, spec) }
                     bx.animateTo(leg.x, spec)
                 }
-                if (phase == Phase.WITHDRAWN) onSettled(phase)
             }
         }
     }

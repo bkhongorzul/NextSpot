@@ -37,6 +37,7 @@ import com.nextspot.app.R
 import com.nextspot.app.car.Speaker
 import com.nextspot.app.ui.DemoEngine
 import com.nextspot.app.ui.components.ClosingCard
+import com.nextspot.app.ui.components.ClosingKind
 import com.nextspot.app.ui.components.DemoActions
 import com.nextspot.app.ui.components.DemoStrip
 import com.nextspot.app.ui.components.DemoUi
@@ -58,7 +59,7 @@ import com.nextspot.app.ui.theme.NsTheme
 private fun DemoEngine.toUi() = DemoUi(
     phase = phase, offerMeters = offerMeters, credits = credits,
     door = door, belt = belt, nav = nav, brake = brake,
-    searching = searching, accepted = accepted, parked = parked,
+    searching = searching, accepted = accepted, parked = parked, declined = declined,
     listening = listening, autoPlaying = autoPlaying,
     log = log.toList(), sdkLines = sdkLines,
 )
@@ -98,7 +99,12 @@ internal fun DemoContent(
     var settled by remember { mutableStateOf<DemoEngine.Phase?>(if (startSettled) ui.phase else null) }
     LaunchedEffect(ui.phase) { if (!startSettled && settled != ui.phase) settled = null }
     val play = { cancel: Boolean -> playingCancel = cancel; act.onPlay(cancel) }
-    val closing = settled == ui.phase && (ui.phase == DemoEngine.Phase.TAKEN || ui.phase == DemoEngine.Phase.WITHDRAWN)
+    val closing = ui.declined || (settled == ui.phase && (ui.phase == DemoEngine.Phase.TAKEN || ui.phase == DemoEngine.Phase.WITHDRAWN))
+    val kind = when {
+        ui.declined -> ClosingKind.DECLINED
+        ui.phase == DemoEngine.Phase.WITHDRAWN -> ClosingKind.CANCELLED
+        else -> ClosingKind.DONE
+    }
 
     val cardAlpha by animateFloatAsState(if (closing) 1f else 0f, tween(300), label = "card")
 
@@ -143,8 +149,8 @@ internal fun DemoContent(
                 contentAlignment = Alignment.Center,
             ) {
                 ClosingCard(
-                    ui.phase,
-                    onReplay = { play(ui.phase == DemoEngine.Phase.WITHDRAWN) }, onHome = act.onBack,
+                    kind,
+                    onReplay = { play(false) }, onHome = act.onBack,
                     modifier = Modifier.graphicsLayer { alpha = cardAlpha },
                 )
             }
