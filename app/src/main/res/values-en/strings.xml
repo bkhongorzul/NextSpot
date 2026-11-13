@@ -4,7 +4,6 @@
 
     <string name="start_demo">One-screen demo</string>
     <string name="start_real">Start for real</string>
-    <string name="start_safety">While driving, everything is asked and answered by voice</string>
     <string name="role_title">Which car are you?</string>
     <string name="role_leaving">Leaving car (Car A)</string>
     <string name="role_searching">Searching car (Car B)</string>
@@ -45,8 +44,6 @@
     <string name="tag_free">Free</string>
     <string name="tag_parked">Parked</string>
     <string name="tag_cancelled">Cancelled</string>
-    <string name="bay_accessible">Accessible</string>
-    <string name="bay_ev">EV charging</string>
 
     <string name="step1_title">Searching starts</string>
     <string name="step1_caption">The searching car waits for a nearby spot. The lot is full right now.</string>

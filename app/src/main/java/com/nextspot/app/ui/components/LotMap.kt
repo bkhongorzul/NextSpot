@@ -198,15 +198,6 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                     .graphicsLayer { rotationZ = 180f }.alpha(0.42f),
                 contentScale = ContentScale.FillBounds,
             )
-            val word = when (k) { 0 -> R.string.bay_accessible; 6 -> R.string.bay_ev; else -> 0 }
-            if (word != 0) {
-                Box(Modifier.offset((x - 14).dp, (NsDims.bayTop + 208).dp).width(160.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(word), style = NsType.small, color = NsColors.text2,
-                        textAlign = TextAlign.Center, maxLines = 1, softWrap = false,
-                    )
-                }
-            }
         }
 
         // status word next to the handed-over bay

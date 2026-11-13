@@ -70,8 +70,6 @@ fun StartScreen(onPick: (String) -> Unit) {
                     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                 ) {
                     NsMic(NsColors.text2, 30.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Text(stringResource(R.string.start_safety), style = NsType.body.copy(fontSize = 26.sp), color = NsColors.text2)
                 }
             }
         }
