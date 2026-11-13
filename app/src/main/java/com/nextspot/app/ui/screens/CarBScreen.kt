@@ -34,7 +34,16 @@ import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
 import com.nextspot.app.data.SpotStatus
-import com.nextspot.app.ui.components.StatusCard
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.nextspot.app.R
+import com.nextspot.app.ui.components.CarButton
+import com.nextspot.app.ui.components.CarCard
+import com.nextspot.app.ui.components.CarPage
+import com.nextspot.app.ui.theme.NsColors
+import com.nextspot.app.ui.theme.NsType
 import com.nextspot.app.ui.components.statusLabel
 import com.nextspot.app.ui.theme.NsTheme
 import com.nextspot.app.data.distanceMeters
@@ -103,87 +112,71 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         onDispose { reg?.remove() }
     }
 
-    NsTheme {
-        androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = com.nextspot.app.ui.theme.NsColors.appBg) {
-    Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState())) {
-        Row { TextButton(onClick = onBack) { Text("← 역할 바꾸기 · Change role") } }
-        Text("차 B · 자리 찾는 차 (Car B, searching)", fontSize = 24.sp)
-        Spacer(Modifier.height(16.dp))
+    CarPage(stringResource(R.string.searching_car) + " \u00b7 Car B", onBack) {
+        Column(Modifier.fillMaxWidth().widthIn(max = 1100.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            val acc = accepted
+            when {
+                acc != null -> {
+                    CarCard(
+                        "안내 중 · Guiding you",
+                        "${acc.metersFromCarB()} m 앞 자리로 이동 중",
+                    )
+                    Text(
+                        if (acc.confirmed) "앞차 출발 확정 · Car A is leaving now"
+                        else "앞차 출발 준비 중 · Car A getting ready",
+                        style = NsType.caption, color = NsColors.text2,
+                    )
+                    CarButton(
+                        "주차했어요 · I parked",
+                        {
+                            repo.markTaken(acc)
+                            speaker.say("주차 완료. 감사합니다.")
+                            message = "주차 완료 · Parked"
+                            accepted = null
+                            searching = false
+                        },
+                        Modifier.fillMaxWidth(), primary = true,
+                    )
+                }
 
-        val acc = accepted
-        when {
-            acc != null -> {
-                StatusCard(
-                    title = "안내 중 · Guiding you",
-                    body = "${acc.metersFromCarB()} m 앞 자리로 이동 중",
-                )
-                Text(
-                    if (acc.confirmed) "앞차 출발 확정 · Car A is leaving now"
-                    else "앞차 출발 준비 중 · Car A getting ready",
-                    fontSize = 18.sp,
-                )
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        repo.markTaken(acc)
-                        speaker.say("주차 완료. 감사합니다.")
-                        message = "주차 완료 · Parked"
-                        accepted = null
-                        searching = false
-                    },
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                ) { Text("주차했어요 · I parked", fontSize = 20.sp) }
-            }
-
-            offer != null -> {
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(20.dp)) {
-                        Text("${offer.metersFromCarB()} m 앞에 자리가 납니다", fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                        Text("A spot is opening ${offer.metersFromCarB()} m ahead", fontSize = 18.sp)
-                        Spacer(Modifier.height(8.dp))
-                        Text(statusLabel(offer.status), fontSize = 18.sp)
-                        Spacer(Modifier.height(16.dp))
-                        Row {
-                            Button(
-                                onClick = {
-                                    repo.accept(offer.id, CAR_B_ID) { ok ->
-                                        if (ok) {
-                                            accepted = offer
-                                            navigator.navigateTo(offer.lat, offer.lng, "NextSpot 주차 자리")
-                                            speaker.say("그 자리로 안내할게요.")
-                                        } else {
-                                            declined.add(offer.id)
-                                            speaker.say("다른 차가 먼저 가져갔어요.")
-                                        }
+                offer != null -> {
+                    CarCard("${offer.metersFromCarB()} m 앞에 자리가 납니다", "A spot is opening ${offer.metersFromCarB()} m ahead")
+                    Text(statusLabel(offer.status), style = NsType.caption, color = NsColors.text2)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CarButton(
+                            "응, 갈게 · Yes",
+                            {
+                                repo.accept(offer.id, CAR_B_ID) { ok ->
+                                    if (ok) {
+                                        accepted = offer
+                                        navigator.navigateTo(offer.lat, offer.lng, "NextSpot 주차 자리")
+                                        speaker.say("그 자리로 안내할게요.")
+                                    } else {
+                                        declined.add(offer.id)
+                                        speaker.say("다른 차가 먼저 가져갔어요.")
                                     }
-                                },
-                                modifier = Modifier.height(64.dp),
-                            ) { Text("응, 갈게 · Yes", fontSize = 20.sp) }
-                            Spacer(Modifier.width(16.dp))
-                            OutlinedButton(
-                                onClick = { declined.add(offer.id) },
-                                modifier = Modifier.height(64.dp),
-                            ) { Text("아니 · No", fontSize = 20.sp) }
-                        }
+                                }
+                            },
+                            Modifier.weight(1f), primary = true,
+                        )
+                        CarButton("아니 · No", { declined.add(offer.id) }, Modifier.weight(1f))
                     }
                 }
-            }
 
-            searching -> StatusCard(title = "찾는 중 · Searching", body = "근처 자리를 기다리는 중…")
+                searching -> CarCard("찾는 중 · Searching", "근처 자리를 기다리는 중…")
 
-            else -> {
-                Text(message, fontSize = 18.sp)
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        searching = true
-                        speaker.say("근처 주차 자리를 찾을게요.")
-                    },
-                    modifier = Modifier.fillMaxWidth().height(72.dp),
-                ) { Text("주차 자리 찾기 · Find parking", fontSize = 22.sp) }
+                else -> {
+                    Text(message, style = NsType.caption, color = NsColors.text2)
+                    CarButton(
+                        "주차 자리 찾기 · Find parking",
+                        {
+                            searching = true
+                            speaker.say("근처 주차 자리를 찾을게요.")
+                        },
+                        Modifier.fillMaxWidth(), primary = true,
+                    )
+                }
             }
-        }
-    }
         }
     }
 }

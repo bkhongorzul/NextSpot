@@ -33,7 +33,16 @@ import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
 import com.nextspot.app.data.SpotStatus
-import com.nextspot.app.ui.components.StatusCard
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.nextspot.app.R
+import com.nextspot.app.ui.components.CarButton
+import com.nextspot.app.ui.components.CarCard
+import com.nextspot.app.ui.components.CarPage
+import com.nextspot.app.ui.theme.NsColors
+import com.nextspot.app.ui.theme.NsType
 import com.nextspot.app.ui.components.statusLabel
 import com.nextspot.app.ui.theme.NsTheme
 
@@ -94,50 +103,33 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
         onDispose { reg?.remove() }
     }
 
-    NsTheme {
-        androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = com.nextspot.app.ui.theme.NsColors.appBg) {
-    Column(
-        Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState())
-    ) {
-        Row {
-            TextButton(onClick = onBack) { Text("← 역할 바꾸기 · Change role") }
-        }
-        Text("차 A · 떠나는 차 (Car A, leaving)", fontSize = 24.sp)
-        Text("신호: ${signals.label} · 크레딧 (credits): $credits", fontSize = 16.sp)
-        Spacer(Modifier.height(16.dp))
-
-        StatusCard(title = "내 자리 상태 · My spot", body = statusLabel(spot?.status))
-        Spacer(Modifier.height(24.dp))
-
-        Text("차 신호 (버튼으로 대신하기) · Car signals (buttons stand in)", fontSize = 16.sp)
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { detector.onDoorOpenedAndClosed() }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-            Text("1. 문 열고 닫기 · Door opened and closed", fontSize = 18.sp)
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { detector.onNavigationSet() }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-            Text("2. 집으로 내비 설정 · Set navigation home", fontSize = 18.sp)
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { detector.onParkingBrakeReleased() }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-            Text("3. 주차 브레이크 해제 · Release parking brake", fontSize = 18.sp)
-        }
-        Spacer(Modifier.height(16.dp))
-        Row {
-            OutlinedButton(onClick = { detector.cancel() }) { Text("안 떠나요 · Cancel") }
-            Spacer(Modifier.width(12.dp))
-            OutlinedButton(onClick = {
-                detector.reset()
-                spotId = null
-                spot = null
-                logs.clear()
-            }) { Text("데모 초기화 · Reset") }
-        }
-
-        Spacer(Modifier.height(24.dp))
-        Text("기록 · Log", fontSize = 16.sp)
-        logs.forEach { Text("• $it", fontSize = 14.sp) }
-    }
+    CarPage(stringResource(R.string.leaving_car) + " \u00b7 Car A", onBack) {
+        Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+            // left: what is going on
+            Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("신호: ${signals.label} · 크레딧 (credits): $credits", style = NsType.body, color = NsColors.text2)
+                CarCard("내 자리 상태 · My spot", statusLabel(spot?.status))
+                Text("기록 · Log", style = NsType.body, color = NsColors.text2)
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    logs.forEach { Text("• $it", style = NsType.body, color = NsColors.leavingCar) }
+                }
+            }
+            // right: the car signals (buttons stand in) and the two small actions
+            Column(Modifier.width(760.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("차 신호 (버튼으로 대신하기) · Car signals (buttons stand in)", style = NsType.body, color = NsColors.text2)
+                CarButton("1. 문 열고 닫기 · Door opened and closed", { detector.onDoorOpenedAndClosed() }, Modifier.fillMaxWidth())
+                CarButton("2. 집으로 내비 설정 · Set navigation home", { detector.onNavigationSet() }, Modifier.fillMaxWidth())
+                CarButton("3. 주차 브레이크 해제 · Release parking brake", { detector.onParkingBrakeReleased() }, Modifier.fillMaxWidth())
+                Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CarButton("안 떠나요 · Cancel", { detector.cancel() }, Modifier.weight(1f))
+                    CarButton("데모 초기화 · Reset", {
+                        detector.reset()
+                        spotId = null
+                        spot = null
+                        logs.clear()
+                    }, Modifier.weight(1f))
+                }
+            }
         }
     }
 }

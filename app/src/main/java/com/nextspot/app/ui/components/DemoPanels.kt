@@ -172,10 +172,10 @@ private fun SignalLine(label: String, on: Boolean) {
     }
 }
 
-/** The outcome of a group: an arrow and one line, white when it has happened, dim before. */
+/** The outcome of a group: an arrow and one line, yellow when it has happened, dim before. */
 @Composable
 private fun SignalResult(label: String, on: Boolean) {
-    val c by animateColorAsState(if (on) NsColors.text else NsColors.text3, tween(250), label = "res")
+    val c by animateColorAsState(if (on) NsColors.main else NsColors.text3, tween(250), label = "res")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(4.dp))
         NsIcon(NsPaths.ARROW, c, 20.dp, strokeWidth = 2.4f, square = true)
