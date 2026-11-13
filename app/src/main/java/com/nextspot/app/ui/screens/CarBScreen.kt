@@ -152,16 +152,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     }
 
     val acc = accepted
-    // B1 shows the distance line instead of the logo
-    val frameLeft: (@Composable () -> Unit)? = if (arrived && !searching && !parked) {
-        {
-            NsIcon(NsPaths.PIN, NsCar.text2, 34.dp, strokeWidth = 1.8f)
-            Spacer(Modifier.width(16.dp))
-            Text("목적지까지 500m · 근처에서 자리를 찾아볼까요?", style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2)
-        }
-    } else null
-
-    CarFrame(onBack, frameLeft) {
+    CarFrame(onBack) {
         when {
             // B6 parked
             parked -> {
@@ -268,7 +259,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     // TODO(zol): connect Platform.voiceInput(context).listen(...) here -
                     //   YES -> accept(offer), NO -> declined.add(offer.id) + refused = true,
                     //   UNKNOWN -> ask again; start listening after the TTS offer ends
-                    CarBox(Modifier.weight(1f)) {
+                    // no extra card here: the voice prompt stands free, the only card is the info above
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
                         CenterColumn {
                             MicBadge()
                             Text("\"네\" 라고 말해보세요", style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
@@ -309,8 +301,14 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 // TODO(zol): voice start - the driver says "자리 찾아줘" -> searching = true (needs the keyword in VoiceInput.listen)
                 Column(Modifier.fillMaxSize()) {
                     Spacer(Modifier.weight(1f))
-                    CarBox(Modifier.height(430.dp)) {
-                        CenterColumn {
+                    // the distance line sits right on top of the mic card
+                    Row(Modifier.padding(start = 8.dp, bottom = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+                        NsIcon(NsPaths.PIN, NsCar.text2, 34.dp, strokeWidth = 1.8f)
+                        Spacer(Modifier.width(16.dp))
+                        Text("목적지까지 500m · 근처에서 자리를 찾아볼까요?", style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2)
+                    }
+                    CarBox(pad = 36.dp) {   // height follows the content, so nothing is cut off
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             MicBadge()
                             Text("\"자리 찾아줘\"", style = NsType.logo.copy(fontSize = 58.sp, lineHeight = 68.sp), color = NsCar.text)
                             Spacer(Modifier.height(10.dp))

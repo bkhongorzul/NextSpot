@@ -1,6 +1,11 @@
 package com.nextspot.app.ui.screens
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -72,10 +77,11 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     var credits by remember { mutableLongStateOf(0L) }
     var reward by remember { mutableStateOf(false) }
     // which sensors have fired (for the display only; the logic stays in DepartureDetector)
-    var seat by remember { mutableStateOf(false) }
+    var door by remember { mutableStateOf(false) }
+    var belt by remember { mutableStateOf(false) }
     var nav by remember { mutableStateOf(false) }
     var brake by remember { mutableStateOf(false) }
-    var simOpen by remember { mutableStateOf(false) }
+    val seat = door || belt   // either one counts as "driver got in" (same as DepartureDetector)
 
     // the "+1 credit" card stays 2.5 s, then fades out
     LaunchedEffect(reward) {
@@ -96,15 +102,15 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     // every sensor (real or simulated) goes through here, so the screen can show which ones arrived
     val sensors = remember {
         object : CarSignals.Listener {
-            override fun onDoorOpenedAndClosed() { seat = true; detector.onDoorOpenedAndClosed() }
-            override fun onSeatbeltBuckled() { seat = true; detector.onSeatbeltBuckled() }
+            override fun onDoorOpenedAndClosed() { door = true; detector.onDoorOpenedAndClosed() }
+            override fun onSeatbeltBuckled() { belt = true; detector.onSeatbeltBuckled() }
             override fun onNavigationSet() { nav = true; detector.onNavigationSet() }
             override fun onParkingBrakeReleased() { brake = true; detector.onParkingBrakeReleased() }
         }
     }
     val signals = remember { Platform.carSignals(context) }
 
-    fun clearSensors() { seat = false; nav = false; brake = false }
+    fun clearSensors() { door = false; belt = false; nav = false; brake = false }
 
     // Real car signals (Pleos variant). In the sim variant this does nothing.
     DisposableEffect(Unit) {
@@ -155,6 +161,16 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
 
     Box(Modifier.fillMaxSize()) {
         CarFrame(onBack) {
+          Column(Modifier.fillMaxSize()) {
+            // The four car sensors, always on screen. In the real car a cell turns yellow when the car reports the
+            // signal by itself; in the simulator a tap sends the same signal (no separate button panel).
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                SensorCell("문 열림", door, Modifier.weight(1f)) { sensors.onDoorOpenedAndClosed() }
+                SensorCell("안전벨트 착용", belt, Modifier.weight(1f)) { sensors.onSeatbeltBuckled() }
+                SensorCell("내비 목적지 설정", nav, Modifier.weight(1f)) { sensors.onNavigationSet() }
+                SensorCell("브레이크 해제", brake, Modifier.weight(1f)) { sensors.onParkingBrakeReleased() }
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 // A3 departure confirmed
                 confirmedOn -> {
@@ -219,13 +235,9 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                 }
 
-                // A1 signal detected: door + seat, destination set (no driver action needed)
+                // A1 signal detected: door / belt, destination set (no driver action needed)
                 seat || nav || registered -> {
                     Column(Modifier.fillMaxSize()) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                            SignalCard("운전석 탑승 감지", seat, Modifier.weight(1f))
-                            SignalCard("내비 목적지 설정", nav, Modifier.weight(1f))
-                        }
                         Spacer(Modifier.weight(1f))
                         Headline(if (registered) "곧 출발 준비가 됐네요" else "출발 신호를 확인하고 있어요")
                         Spacer(Modifier.height(10.dp))
@@ -245,25 +257,19 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                 }
             }
 
-            // Simulator: stands in for the car's sensors (the real car sends these by itself). Closed by default.
-            Column(Modifier.align(Alignment.BottomEnd), horizontalAlignment = Alignment.End) {
-                if (simOpen) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SimButton("문 열고 닫기") { sensors.onDoorOpenedAndClosed() }
-                        SimButton("내비 설정") { sensors.onNavigationSet() }
-                        SimButton("브레이크 해제") { sensors.onParkingBrakeReleased() }
-                        SimButton("출발 안 함") { detector.cancel(); clearSensors() }
-                        SimButton("처음부터") {
-                            detector.reset()
-                            clearSensors()
-                            spotId = null
-                            spot = null
-                            reward = false
-                        }
-                    }
-                }
-                TextLink(if (simOpen) "시뮬레이터 닫기" else "시뮬레이터 · 차 신호 직접 보내기", { simOpen = !simOpen }, NsCar.text3)
+            // Demo only: cancel the departure / start over (the real car needs neither)
+            Row(Modifier.align(Alignment.BottomEnd)) {
+                TextLink("출발 안 함", { detector.cancel(); clearSensors() }, NsCar.text3)
+                TextLink("처음부터", {
+                    detector.reset()
+                    clearSensors()
+                    spotId = null
+                    spot = null
+                    reward = false
+                }, NsCar.text3)
             }
+            }
+          }
         }
 
         // "+1 credit" when the spot has been taken
@@ -288,13 +294,19 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
 private fun CenterColumn2(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) =
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, content = content)
 
-/** One detected signal: yellow check once it has fired, empty grey disc before. */
+/**
+ * One car sensor. Fired = yellow outline and yellow text, not fired = grey outline and text.
+ * The real car fires it by itself; in the simulator a tap sends the same signal.
+ */
 @Composable
-private fun SignalCard(label: String, on: Boolean, modifier: Modifier = Modifier) {
-    CarBox(modifier, pad = 22.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            CheckDisc(on)
-            Text(label, style = NsType.title.copy(fontSize = 30.sp), color = if (on) NsCar.text else NsCar.text3)
-        }
+private fun SensorCell(label: String, on: Boolean, modifier: Modifier = Modifier, onTap: () -> Unit) {
+    val line by animateColorAsState(if (on) NsCar.accent else NsCar.border, tween(250), label = "line")
+    val textColor by animateColorAsState(if (on) NsCar.accent else NsCar.text2, tween(250), label = "text")
+    Box(
+        modifier.clip(NsCar.shape).border(if (on) 2.dp else 1.dp, line, NsCar.shape)
+            .clickable(role = Role.Button, onClick = onTap).padding(vertical = 30.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = NsType.title.copy(fontSize = 28.sp), color = textColor, maxLines = 1)
     }
 }

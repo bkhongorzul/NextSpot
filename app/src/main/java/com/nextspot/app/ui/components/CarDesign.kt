@@ -61,11 +61,7 @@ internal fun CarFrame(onBack: () -> Unit, left: (@Composable () -> Unit)? = null
                     Modifier.fillMaxWidth().height(112.dp).padding(horizontal = SIDE),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (left != null) left() else {
-                        Box(Modifier.size(14.dp).clip(CircleShape).background(NsCar.accent))
-                        Spacer(Modifier.width(14.dp))
-                        Text("NextSpot", style = NsType.title.copy(fontSize = 30.sp), color = NsCar.text)
-                    }
+                    left?.invoke()
                     Spacer(Modifier.weight(1f))
                     Text(
                         "처음 화면으로", style = NsType.body, color = NsCar.text3,
