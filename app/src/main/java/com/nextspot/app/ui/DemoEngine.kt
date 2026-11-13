@@ -110,7 +110,7 @@ class DemoEngine(
         navigator.start()
         carContext.start(
             onNearDestination = { m ->
-                add("Car B", "📍 목적지 ${m}m 전 (Pleos NaviHelper) → 자동 탐색")
+                add("Car B", "목적지 ${m}m 전 (Pleos NaviHelper) → 자동 탐색")
                 startSearch()
             },
             onPosition = { lat, lng -> lastPosition = "%.5f, %.5f".format(lat, lng) },
@@ -124,32 +124,32 @@ class DemoEngine(
     // ---------------- Car A: signals ----------------
     override fun onDoorOpenedAndClosed() {
         door = true
-        add("Car A", "🚪 문 열고 닫음 (차 신호)")
+        add("Car A", "문 열고 닫음 (차 신호)")
         detector.onDoorOpenedAndClosed()
     }
 
     override fun onSeatbeltBuckled() {
         belt = true
-        add("Car A", "💺 운전석 안전벨트 착용 (차 신호)")
+        add("Car A", "운전석 안전벨트 착용 (차 신호)")
         detector.onSeatbeltBuckled()
     }
 
     override fun onNavigationSet() {
         nav = true
-        add("Car A", "🧭 내비 목적지 설정 (차 신호)")
+        add("Car A", "내비 목적지 설정 (차 신호)")
         detector.onNavigationSet()
     }
 
     override fun onParkingBrakeReleased() {
         if (brake) return
         brake = true
-        add("Car A", "🅿️ 주차 브레이크 해제 (차 신호)")
+        add("Car A", "주차 브레이크 해제 (차 신호)")
         detector.onParkingBrakeReleased()
     }
 
     /** Car A's driver decides to stay. */
     fun cancelDeparture() {
-        add("Car A", "✋ 운전자가 출발하지 않음")
+        add("Car A", "운전자가 출발하지 않음")
         detector.cancel()
     }
 
@@ -167,27 +167,27 @@ class DemoEngine(
 
     private fun onSpotChanged(s: Spot) {
         when (s.status) {
-            SpotStatus.LIKELY -> add("클라우드", "📡 자리 등록: 곧 빌 가능성 (likely)")
-            SpotStatus.CONFIRMED -> add("클라우드", "📡 자리 확정 (confirmed)")
-            SpotStatus.MATCHED -> add("클라우드", "🔒 Car B에게 예약됨 (matched)")
-            SpotStatus.TAKEN -> add("클라우드", "✅ 주차 완료 · Car A 크레딧 +1")
+            SpotStatus.LIKELY -> add("클라우드", "자리 등록: 곧 빌 가능성 (likely)")
+            SpotStatus.CONFIRMED -> add("클라우드", "자리 확정 (confirmed)")
+            SpotStatus.MATCHED -> add("클라우드", "Car B에게 예약됨 (matched)")
+            SpotStatus.TAKEN -> add("클라우드", "주차 완료 · Car A 크레딧 +1")
             SpotStatus.WITHDRAWN -> {
-                add("클라우드", "❌ 제안 철회 (withdrawn)")
+                add("클라우드", "제안 철회 (withdrawn)")
                 if (accepted || asking) {
                     voice.stop(); listening = false; asking = false; accepted = false
-                    add("Car B", "🔊 \"자리가 취소됐어요. 다른 자리를 찾을게요.\"")
+                    add("Car B", "\"자리가 취소됐어요. 다른 자리를 찾을게요.\"")
                     speaker.say("자리가 취소됐어요. 다른 자리를 찾을게요.")
                 }
             }
         }
-        if (s.status == SpotStatus.MATCHED && s.confirmed) add("클라우드", "📡 출발 확정 (confirmed)")
+        if (s.status == SpotStatus.MATCHED && s.confirmed) add("클라우드", "출발 확정 (confirmed)")
     }
 
     // ---------------- Car B: search, offer, answer ----------------
     fun startSearch() {
         if (searching) return
         searching = true
-        add("Car B", "🔍 주차 자리 탐색 시작")
+        add("Car B", "주차 자리 탐색 시작")
         openReg?.remove()
         openReg = repo.listenOpenSpots(DemoPlaces.GROUP, CAR_B) { list ->
             if (accepted || asking || parked) return@listenOpenSpots
@@ -201,15 +201,15 @@ class DemoEngine(
         val m = metersFromB(s)
         offerMeters = m
         asking = true
-        add("Car B", "📥 자리 수신: ${m}m 앞 (${s.status})")
+        add("Car B", "자리 수신: ${m}m 앞 (${s.status})")
         val sentence = "${m}미터 앞에 자리가 곧 납니다. 갈까요?"
-        add("Car B", "🔊 \"$sentence\"")
+        add("Car B", "\"$sentence\"")
         speaker.say(sentence) {
             if (!asking) return@say
             if (autoPlaying) {
                 scope.launch {
                     delay(1200)
-                    if (asking) { add("Car B", "🗣 운전자: \"네\" (자동 재생)"); answerYes() }
+                    if (asking) { add("Car B", "운전자: \"네\" (자동 재생)"); answerYes() }
                 }
             } else {
                 listenForAnswer()
@@ -220,18 +220,18 @@ class DemoEngine(
     fun listenForAnswer() {
         if (!asking) return
         if (!voice.available) {
-            add("Car B", "🎤 음성 인식 사용 불가 → 버튼으로 답해 주세요")
+            add("Car B", "음성 인식 사용 불가 → 버튼으로 답해 주세요")
             return
         }
         listening = true
-        add("Car B", "🎤 듣는 중… (\"네\" / \"아니요\")")
+        add("Car B", "듣는 중… (\"네\" / \"아니요\")")
         voice.listen(
             onAnswer = { answer, heard ->
                 listening = false
                 when (answer) {
-                    VoiceInput.Answer.YES -> { add("Car B", "🗣 운전자: \"$heard\" → 수락"); answerYes() }
-                    VoiceInput.Answer.NO -> { add("Car B", "🗣 운전자: \"$heard\" → 거절"); answerNo() }
-                    VoiceInput.Answer.UNKNOWN -> add("Car B", "🎤 못 알아들었어요 → 다시 말하거나 버튼")
+                    VoiceInput.Answer.YES -> { add("Car B", "운전자: \"$heard\" → 수락"); answerYes() }
+                    VoiceInput.Answer.NO -> { add("Car B", "운전자: \"$heard\" → 거절"); answerNo() }
+                    VoiceInput.Answer.UNKNOWN -> add("Car B", "못 알아들었어요 → 다시 말하거나 버튼")
                 }
             },
             onUnavailable = { listening = false },
@@ -245,11 +245,11 @@ class DemoEngine(
             asking = false
             if (ok) {
                 accepted = true
-                add("Car B", "✅ 수락 → 내비가 그 자리로 안내")
+                add("Car B", "수락 → 내비가 그 자리로 안내")
                 navigator.navigateTo(s.lat, s.lng, "NextSpot 주차 자리")
                 speaker.say("그 자리로 안내할게요.")
             } else {
-                add("Car B", "⚠️ 다른 차가 먼저 가져감")
+                add("Car B", "다른 차가 먼저 가져감")
                 speaker.say("다른 차가 먼저 가져갔어요.")
             }
         }
@@ -258,7 +258,7 @@ class DemoEngine(
     fun answerNo() {
         voice.stop(); listening = false
         asking = false
-        add("Car B", "↩️ 거절 → 계속 탐색")
+        add("Car B", "거절 → 계속 탐색")
     }
 
     fun parkCarB() {
@@ -266,7 +266,7 @@ class DemoEngine(
         if (!accepted || parked) return
         parked = true
         repo.markTaken(s)
-        add("Car B", "🚗 주차 완료")
+        add("Car B", "주차 완료")
         speaker.say("자리를 넘겨드렸어요. 크레딧 1점이 적립됐어요.")
     }
 
