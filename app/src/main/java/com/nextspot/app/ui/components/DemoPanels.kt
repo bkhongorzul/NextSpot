@@ -160,21 +160,22 @@ private fun SignalGroup(title: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun SignalLine(label: String, on: Boolean) {
-    val bg by animateColorAsState(if (on) NsColors.main else NsColors.surface, tween(250), label = "sig")
+    val c by animateColorAsState(if (on) NsColors.text else NsColors.text3, tween(250), label = "sig")
     val pop by animateFloatAsState(if (on) 1f else 0.4f, spring(dampingRatio = 0.5f, stiffness = 400f), label = "pop")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(28.dp).clip(NsShape.mark).background(bg), contentAlignment = Alignment.Center) {
-            if (on) NsIcon(NsPaths.CHECK, NsColors.onMain, 20.dp, Modifier.graphicsLayer { scaleX = pop; scaleY = pop }, strokeWidth = 3f, square = true)
+        // quiet: a dim box that turns into a white check, and the text goes from dim to white (no accent colour)
+        Box(Modifier.size(28.dp).clip(NsShape.mark).background(NsColors.surface), contentAlignment = Alignment.Center) {
+            if (on) NsIcon(NsPaths.CHECK, NsColors.text, 20.dp, Modifier.graphicsLayer { scaleX = pop; scaleY = pop }, strokeWidth = 3f, square = true)
         }
         Spacer(Modifier.width(14.dp))
-        Text(label, style = if (on) NsType.bodyBold else NsType.body, color = if (on) NsColors.text else NsColors.text3, maxLines = 1)
+        Text(label, style = if (on) NsType.bodyBold else NsType.body, color = c, maxLines = 1)
     }
 }
 
-/** The outcome of a group: an arrow and one line, bright when it has happened. */
+/** The outcome of a group: an arrow and one line, white when it has happened, dim before. */
 @Composable
 private fun SignalResult(label: String, on: Boolean) {
-    val c by animateColorAsState(if (on) NsColors.main else NsColors.text3, tween(250), label = "res")
+    val c by animateColorAsState(if (on) NsColors.text else NsColors.text3, tween(250), label = "res")
     Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(4.dp))
         NsIcon(NsPaths.ARROW, c, 20.dp, strokeWidth = 2.4f, square = true)

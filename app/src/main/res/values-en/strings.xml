@@ -45,7 +45,7 @@
     <string name="step1_title">Searching starts</string>
     <string name="step1_caption">The searching car waits for a nearby spot. The lot is full right now.</string>
     <string name="step2_title">Leaving car spotted</string>
-    <string name="step2_caption">The leaving car’s own signals tell us it is about to go. No equipment is needed in the lot.</string>
+    <string name="step2_caption">The car\u2019s own signals show it is about to go. No lot equipment needed.</string>
     <string name="step3_title">Voice offer</string>
     <string name="step3_caption">The searching driver said “yes”. The spot is reserved for them and navigation leads the way.</string>
     <string name="step4_title">Departure confirmed</string>

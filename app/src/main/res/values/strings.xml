@@ -48,7 +48,7 @@
     <string name="step1_title">자리 찾기 시작</string>
     <string name="step1_caption">찾는 차가 근처 빈자리를 기다려요. 주차장은 지금 꽉 차 있어요.</string>
     <string name="step2_title">나갈 차 감지</string>
-    <string name="step2_caption">나가는 차가 보내는 신호만으로 출발을 미리 알아채요. 주차장에 따로 설비를 달 필요가 없어요.</string>
+    <string name="step2_caption">차 신호만으로 출발을 미리 알아채요. 주차장 설비는 필요 없어요.</string>
     <string name="step3_title">음성으로 제안</string>
     <string name="step3_caption">찾는 차가 “네”라고 답했어요. 이 자리는 찾는 차에게 예약되고, 내비가 그 자리로 안내해요.</string>
     <string name="step4_title">출발 확정</string>

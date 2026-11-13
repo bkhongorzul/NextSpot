@@ -89,15 +89,30 @@ fun RolePickScreen(onPick: (String) -> Unit, onBack: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(stringResource(R.string.role_title), style = NsType.nowQuestion, color = NsColors.text)
-                    Spacer(Modifier.height(48.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        StartButton(stringResource(R.string.role_leaving)) { onPick("A") }
-                        StartButton(stringResource(R.string.role_searching)) { onPick("B") }
+                    Spacer(Modifier.height(56.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+                        RoleCard(stringResource(R.string.leaving_car), "Car A") { onPick("A") }
+                        RoleCard(stringResource(R.string.searching_car), "Car B") { onPick("B") }
                     }
                 }
                 Spacer(Modifier.height(112.dp))
             }
         }
+    }
+}
+
+/** A big square card: the car's name in large type, the short code under it. */
+@Composable
+private fun RoleCard(name: String, code: String, onClick: () -> Unit) {
+    Column(
+        Modifier.size(560.dp, 420.dp).clip(NsShape.button).background(NsColors.surface)
+            .clickable(role = Role.Button, onClick = onClick),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(name, style = NsType.logo, color = NsColors.text, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(12.dp))
+        Text(code, style = NsType.caption, color = NsColors.text2)
     }
 }
 

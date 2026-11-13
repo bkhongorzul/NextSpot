@@ -72,7 +72,7 @@ private fun lookOf(p: Phase): Look? = when (p) {
 }
 
 /**
- * Searching car: it moves only three times. A little forward when the search starts, a little forward after
+ * Searching car: it moves only three times. A little forward when the search starts, further forward after
  * the driver said yes, and into the spot after the leaving car has gone. Everything else it waits.
  */
 private class Leg(val x: Float, val seconds: Float)
@@ -82,8 +82,8 @@ private fun searchLeg(p: Phase): Leg? = when (p) {
     Phase.SEARCHING -> Leg(220f, 2.5f)
     Phase.LIKELY -> Leg(220f, 0f)
     Phase.OFFER -> Leg(220f, 0f)
-    Phase.RESERVED -> Leg(340f, 2.6f)
-    Phase.CONFIRMED -> Leg(340f, 0f)
+    Phase.RESERVED -> Leg(500f, 3.0f)
+    Phase.CONFIRMED -> Leg(500f, 0f)
     Phase.WITHDRAWN -> null   // cancelled: the searching car stays where it is
     Phase.TAKEN -> null
 }
