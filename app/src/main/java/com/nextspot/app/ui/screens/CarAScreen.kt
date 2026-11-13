@@ -45,6 +45,16 @@ import com.nextspot.app.ui.theme.NsColors
 import com.nextspot.app.ui.theme.NsType
 import com.nextspot.app.ui.components.statusLabel
 import com.nextspot.app.ui.theme.NsTheme
+import com.nextspot.app.ui.theme.NsShape
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import kotlinx.coroutines.delay
 
 private const val CAR_A_ID = "car-A"
 
@@ -57,6 +67,12 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     var spotId by remember { mutableStateOf<String?>(null) }
     var spot by remember { mutableStateOf<Spot?>(null) }
     var credits by remember { mutableLongStateOf(0L) }
+    var reward by remember { mutableStateOf(false) }
+
+    // the "+1 credit" overlay stays 2.5 s, then fades out
+    LaunchedEffect(reward) {
+        if (reward) { delay(2500); reward = false }
+    }
 
     val detector = remember {
         DepartureDetector(
@@ -94,7 +110,10 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                 if (status != lastStatus) {
                     when (status) {
                         SpotStatus.MATCHED -> speaker.say("다음 차가 이 자리로 오고 있어요.")
-                        SpotStatus.TAKEN -> speaker.say("자리를 넘겨드렸어요. 크레딧 1점이 적립됐어요.")
+                        SpotStatus.TAKEN -> {
+                            speaker.say("자리를 넘겨드렸어요. 크레딧 1점이 적립됐어요.")
+                            reward = true   // big "+1 credit" for a moment (the voice may not be audible)
+                        }
                     }
                     lastStatus = status
                 }
@@ -104,7 +123,8 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     }
 
     CarPage(stringResource(R.string.leaving_car) + " \u00b7 Car A", onBack) {
-        Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
             // left: what is going on
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("신호: ${signals.label} · 크레딧 (credits): $credits", style = NsType.body, color = NsColors.text2)
@@ -126,10 +146,27 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                         detector.reset()
                         spotId = null
                         spot = null
+                        reward = false
                         logs.clear()
                     }, Modifier.weight(1f))
                 }
             }
+        }
+        androidx.compose.animation.AnimatedVisibility(
+            visible = reward,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(tween(250)),
+            exit = fadeOut(tween(500)),
+        ) {
+            Column(
+                Modifier.clip(NsShape.button).background(NsColors.surface).padding(horizontal = 120.dp, vertical = 64.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text("+1 크레딧 · +1 credit", style = NsType.logo, color = NsColors.main)
+                Text("주차 자리를 넘겨드렸어요 · You handed over the spot", style = NsType.nowQuestion, color = NsColors.text)
+            }
+        }
         }
     }
 }
