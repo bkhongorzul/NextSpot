@@ -5,6 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,13 +37,34 @@ import com.nextspot.app.ui.theme.NsType
 internal fun CarPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     NsTheme {
         NsWindow {
-            Column(Modifier.fillMaxSize()) {
-                NsTitleBar(title, stringResource(R.string.demo_back), onBack)
-                Column(
-                    Modifier.weight(1f).fillMaxWidth().padding(start = NsDims.sidePad, end = NsDims.sidePad, bottom = 40.dp),
-                    content = content,
-                )
+            Box(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize()) {
+                    NsTitleBar(title, stringResource(R.string.demo_back), onBack)
+                    Column(
+                        Modifier.weight(1f).fillMaxWidth().padding(start = NsDims.sidePad, end = NsDims.sidePad, bottom = 40.dp),
+                        content = content,
+                    )
+                }
+                LiveBadge(Modifier.align(Alignment.TopEnd).padding(end = NsDims.sidePad))
             }
+        }
+    }
+}
+
+/** Top-right tag: this is the real app, reading and writing the live Firestore (not a drawing). */
+@Composable
+private fun LiveBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier.height(NsDims.titleBar),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            Modifier.clip(NsShape.button).background(NsColors.surface).padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(Modifier.size(14.dp).clip(CircleShape).background(NsColors.ok))
+            Text("LIVE · Firestore", style = NsType.tag, color = NsColors.text)
         }
     }
 }
