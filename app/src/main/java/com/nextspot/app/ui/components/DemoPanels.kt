@@ -65,7 +65,7 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                     stringResource(R.string.offer, ui.offerMeters ?: 0),
                     style = NsType.nowQuestion.copy(lineBreak = NsType.keepAll), color = NsColors.text,
                 )
-                VoiceHint(ui.listening)
+                VoiceHint(ui.listening, act.onTalk)
                 Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     NsButton(
                         stringResource(R.string.yes), act.onYes, Modifier.weight(1f), NsDims.bigButtonH,
@@ -74,14 +74,6 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                     NsButton(
                         stringResource(R.string.no), act.onNo, Modifier.weight(1f), NsDims.bigButtonH,
                         NsColors.surfaceHigh, NsColors.text, NsType.yesNo, padH = 0.dp,
-                    )
-                    // the voice answer: opens the microphone (kept from the old screen)
-                    NsButton(
-                        stringResource(if (ui.listening) R.string.talking else R.string.talk), act.onTalk,
-                        Modifier.width(148.dp), NsDims.bigButtonH,
-                        if (ui.listening) NsColors.main else NsColors.surface,
-                        if (ui.listening) NsColors.onMain else NsColors.text, NsType.bodyBold, padH = 8.dp,
-                        icon = { NsMic(if (ui.listening) NsColors.onMain else NsColors.text, 28.dp) },
                     )
                 }
             }
@@ -117,11 +109,15 @@ private fun nowText(p: Phase): Pair<String, String> = when (p) {
 
 /** Mic icon + the hint. While the microphone is open the icon pulses and the hint says so. */
 @Composable
-private fun VoiceHint(listening: Boolean) {
+private fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
     val pulse by rememberInfiniteTransition(label = "mic").animateFloat(
         0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulse",
     )
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    // Voice is the main way to answer; touching this line opens the microphone again (e.g. if it missed the answer).
+    Row(
+        Modifier.clip(NsShape.button).clickable(enabled = !listening, role = Role.Button, onClick = onTalk),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         NsMic(NsColors.main, 28.dp, Modifier.alpha(if (listening) pulse else 1f))
         Text(
             stringResource(if (listening) R.string.voice_listening else R.string.voice_hint),

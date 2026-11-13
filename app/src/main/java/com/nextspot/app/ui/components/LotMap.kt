@@ -2,6 +2,7 @@ package com.nextspot.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -47,6 +48,7 @@ import com.nextspot.app.ui.theme.NsShape
 import com.nextspot.app.ui.theme.NsType
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.hypot
 
 private typealias Anim = Animatable<Float, AnimationVector1D>
 
@@ -62,17 +64,17 @@ private fun lookOf(p: Phase): Look? = when (p) {
     else -> null
 }
 
-/** Searching car: where it goes in each phase, and how many seconds that takes (DESIGN.md section 8). */
-private class Leg(val x: Float, val seconds: Float)
+/** Searching car: where it goes in each phase. The time of a move comes from its distance (one speed for every car). */
+private class Leg(val x: Float)
 
 private fun searchLeg(p: Phase): Leg? = when (p) {
-    Phase.IDLE -> Leg(120f, 0f)
-    Phase.SEARCHING -> Leg(210f, 2.5f)
-    Phase.LIKELY -> Leg(280f, 2.4f)
-    Phase.OFFER -> Leg(340f, 1.6f)
-    Phase.RESERVED -> Leg(460f, 2.6f)
-    Phase.CONFIRMED -> Leg(560f, 2.4f)
-    Phase.WITHDRAWN -> Leg(920f, 3.2f)
+    Phase.IDLE -> Leg(120f)
+    Phase.SEARCHING -> Leg(210f)
+    Phase.LIKELY -> Leg(280f)
+    Phase.OFFER -> Leg(340f)
+    Phase.RESERVED -> Leg(460f)
+    Phase.CONFIRMED -> Leg(560f)
+    Phase.WITHDRAWN -> Leg(920f)
     Phase.TAKEN -> null
 }
 
@@ -85,7 +87,9 @@ private const val BAY_Y = 168f
 internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifier) {
     val look = lookOf(phase)
     val departing = phase == Phase.CONFIRMED || phase == Phase.TAKEN
-    val ease = NsMotion.drive
+    // Constant speed: every move is linear and takes distance / speed (no slow-fast-slow per leg).
+    val ease = LinearEasing
+    fun ms(dx: Float, dy: Float) = (hypot(dx, dy) / NsMotion.carSpeed * 1000f).toInt().coerceAtLeast(1)
 
     // car positions, animated with one easing and a duration per leg (steady speed)
     val bx = remember { Animatable(searchLeg(phase)?.x ?: BAY_X) }
@@ -108,15 +112,15 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
             }
             phase == Phase.TAKEN -> coroutineScope {   // two legs: in front of the bay, then into it
                 bParked = false
-                val leg1 = tween<Float>(1600, easing = ease)
+                val leg1 = tween<Float>(ms(BAY_X - bx.value, 420f - by.value), easing = ease)
                 launch { bx.animateTo(BAY_X, leg1) }
                 launch { brot.animateTo(0f, leg1) }
                 by.animateTo(420f, leg1)
-                by.animateTo(BAY_Y, tween(1600, easing = ease))
+                by.animateTo(BAY_Y, tween(ms(0f, 420f - BAY_Y), easing = ease))
                 bParked = true
             }
             leg != null && leg.x >= bx.value -> {   // never roll backwards (e.g. after answering "no")
-                val spec = tween<Float>((leg.seconds * 1000).toInt(), easing = ease)
+                val spec = tween<Float>(ms(leg.x - bx.value, 0f), easing = ease)
                 coroutineScope {
                     launch { by.animateTo(LANE_Y, spec) }
                     launch { brot.animateTo(90f, spec) }
@@ -134,15 +138,15 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
             return@LaunchedEffect
         }
         aMoving = true
-        ay.animateTo(370f, tween(1300, easing = ease))                       // back out
+        ay.animateTo(370f, tween(ms(0f, 370f - BAY_Y), easing = ease))                       // back out
         coroutineScope {                                                    // turn into the upper lane
-            val spec = tween<Float>(1100, easing = ease)
+            val spec = tween<Float>(ms(830f - BAY_X, 420f - 370f), easing = ease)
             launch { ax.animateTo(830f, spec) }
             launch { arot.animateTo(90f, spec) }
             ay.animateTo(420f, spec)
         }
         coroutineScope {                                                    // drive off and fade
-            val spec = tween<Float>(1900, easing = ease)
+            val spec = tween<Float>(ms(1180f - 830f, 0f), easing = ease)
             launch { aAlpha.animateTo(0f, spec) }
             ax.animateTo(1180f, spec)
         }

@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">NextSpot</string>
 
-    <string name="start_demo">One-screen demo</string>
-    <string name="start_real">Start for real</string>
+    <string name="start_demo">Spot handover demo</string>
+    <string name="start_real">Start in my car</string>
     <string name="role_title">Which car are you?</string>
     <string name="role_leaving">Leaving car (Car A)</string>
     <string name="role_searching">Searching car (Car B)</string>

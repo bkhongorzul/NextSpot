@@ -47,6 +47,9 @@ object NsDims {
 object NsMotion {
     /** One easing for every car move. Durations differ per leg so the speed feels steady (DESIGN.md section 8). */
     val drive = CubicBezierEasing(0.4f, 0f, 0.3f, 1f)
+
+    /** Every car moves at this speed (dp per second), in a straight line, so nothing looks rushed. */
+    const val carSpeed = 80f
     val logoLine = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 }
 
