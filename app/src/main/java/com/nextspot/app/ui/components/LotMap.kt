@@ -1,0 +1,287 @@
+package com.nextspot.app.ui.components
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.nextspot.app.R
+import com.nextspot.app.ui.DemoEngine.Phase
+import com.nextspot.app.ui.theme.NsColors
+import com.nextspot.app.ui.theme.NsDims
+import com.nextspot.app.ui.theme.NsMotion
+import com.nextspot.app.ui.theme.NsShape
+import com.nextspot.app.ui.theme.NsType
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+
+private typealias Anim = Animatable<Float, AnimationVector1D>
+
+/** How the handed-over bay looks in each phase (DESIGN.md section 7). */
+private class Look(val color: Color, val dashed: Boolean, val width: Float, val icon: String, val tag: Int)
+
+private fun lookOf(p: Phase): Look? = when (p) {
+    Phase.LIKELY, Phase.OFFER -> Look(Color.White, true, 5f, NsPaths.CLOCK, R.string.tag_likely)
+    Phase.RESERVED -> Look(NsColors.main, false, 5f, NsPaths.LOCK, R.string.tag_reserved)
+    Phase.CONFIRMED -> Look(NsColors.ok, false, 5f, NsPaths.CHECK, R.string.tag_free)
+    Phase.TAKEN -> Look(NsColors.ok, false, 5f, NsPaths.PARK, R.string.tag_parked)
+    Phase.WITHDRAWN -> Look(NsColors.cancel, false, 3f, NsPaths.X, R.string.tag_cancelled)
+    else -> null
+}
+
+/** Searching car: where it goes in each phase, and how many seconds that takes (DESIGN.md section 8). */
+private class Leg(val x: Float, val seconds: Float)
+
+private fun searchLeg(p: Phase): Leg? = when (p) {
+    Phase.IDLE -> Leg(120f, 0f)
+    Phase.SEARCHING -> Leg(210f, 2.5f)
+    Phase.LIKELY -> Leg(280f, 2.4f)
+    Phase.OFFER -> Leg(340f, 1.6f)
+    Phase.RESERVED -> Leg(460f, 2.6f)
+    Phase.CONFIRMED -> Leg(560f, 2.4f)
+    Phase.WITHDRAWN -> Leg(920f, 3.2f)
+    Phase.TAKEN -> null
+}
+
+private const val LANE_Y = 620f
+private const val BAY_X = 672f     // centre of the handed-over bay
+private const val BAY_Y = 168f
+
+/** The parking lot: 1080x880, drawn in dp exactly as in DESIGN.md section 6.2 / 6.3. */
+@Composable
+internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifier) {
+    val look = lookOf(phase)
+    val departing = phase == Phase.CONFIRMED || phase == Phase.TAKEN
+    val ease = NsMotion.drive
+
+    // car positions, animated with one easing and a duration per leg (steady speed)
+    val bx = remember { Animatable(searchLeg(phase)?.x ?: BAY_X) }
+    val by = remember { Animatable(if (phase == Phase.TAKEN) BAY_Y else LANE_Y) }
+    val brot = remember { Animatable(if (phase == Phase.TAKEN) 0f else 90f) }
+    val ax = remember { Animatable(if (departing) 1180f else BAY_X) }
+    val ay = remember { Animatable(if (departing) 420f else BAY_Y) }
+    val arot = remember { Animatable(if (departing) 90f else 0f) }
+    val aAlpha = remember { Animatable(if (departing) 0f else 1f) }
+    var aMoving by remember { mutableStateOf(departing) }
+    var bParked by remember { mutableStateOf(phase == Phase.TAKEN) }
+
+    // searching car
+    LaunchedEffect(phase) {
+        val leg = searchLeg(phase)
+        when {
+            phase == Phase.IDLE -> {   // a new run: back to the start at once, no sliding backwards
+                bParked = false
+                bx.snapTo(120f); by.snapTo(LANE_Y); brot.snapTo(90f)
+            }
+            phase == Phase.TAKEN -> coroutineScope {   // two legs: in front of the bay, then into it
+                bParked = false
+                val leg1 = tween<Float>(1600, easing = ease)
+                launch { bx.animateTo(BAY_X, leg1) }
+                launch { brot.animateTo(0f, leg1) }
+                by.animateTo(420f, leg1)
+                by.animateTo(BAY_Y, tween(1600, easing = ease))
+                bParked = true
+            }
+            leg != null && leg.x >= bx.value -> {   // never roll backwards (e.g. after answering "no")
+                val spec = tween<Float>((leg.seconds * 1000).toInt(), easing = ease)
+                coroutineScope {
+                    launch { by.animateTo(LANE_Y, spec) }
+                    launch { brot.animateTo(90f, spec) }
+                    bx.animateTo(leg.x, spec)
+                }
+            }
+        }
+    }
+
+    // leaving car: three legs once the departure is confirmed
+    LaunchedEffect(departing) {
+        if (!departing) {
+            aMoving = false
+            ax.snapTo(BAY_X); ay.snapTo(BAY_Y); arot.snapTo(0f); aAlpha.snapTo(1f)
+            return@LaunchedEffect
+        }
+        aMoving = true
+        ay.animateTo(370f, tween(1300, easing = ease))                       // back out
+        coroutineScope {                                                    // turn into the upper lane
+            val spec = tween<Float>(1100, easing = ease)
+            launch { ax.animateTo(830f, spec) }
+            launch { arot.animateTo(90f, spec) }
+            ay.animateTo(420f, spec)
+        }
+        coroutineScope {                                                    // drive off and fade
+            val spec = tween<Float>(1900, easing = ease)
+            launch { aAlpha.animateTo(0f, spec) }
+            ax.animateTo(1180f, spec)
+        }
+    }
+
+    val lineColor by animateColorAsState(look?.color ?: NsColors.surfaceHigh, tween(250), label = "bay")
+    val tagBAlpha by animateFloatAsState(if (phase == Phase.TAKEN && !bParked) 0f else 1f, tween(300), label = "tagB")
+    val tagAAlpha by animateFloatAsState(if (aMoving) 0f else 1f, tween(300), label = "tagA")
+    val showRoute = phase == Phase.RESERVED || phase == Phase.CONFIRMED
+
+    Box(modifier.size(NsDims.mapW, NsDims.mapH).clip(NsShape.button).background(NsColors.screen)) {
+        // lines: bays, lane, the handed-over bay and the route
+        Canvas(Modifier.fillMaxSize()) {
+            val u = 1.dp.toPx()
+            val line = NsColors.surfaceHigh
+            for (k in 0..6) {
+                val x = (NsDims.bayX0 + NsDims.bayStep * k) * u
+                for (top in listOf(NsDims.bayTop, NsDims.bayBottomRow)) {
+                    drawRect(line, Offset(x, top * u), androidx.compose.ui.geometry.Size(3 * u, 240 * u))
+                    if (k == 6) drawRect(line, Offset(x + 129 * u, top * u), androidx.compose.ui.geometry.Size(3 * u, 240 * u))
+                }
+            }
+            drawLine(
+                NsColors.surface, Offset(40 * u, 501.5f * u), Offset(1040 * u, 501.5f * u), 3 * u,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(9 * u, 9 * u)),
+            )
+            if (look != null) {
+                val w = look.width * u
+                bayEdge(lineColor, (606 + look.width / 2) * u, w, look.dashed, u)
+                bayEdge(lineColor, (741 - look.width / 2) * u, w, look.dashed, u)
+            }
+            if (showRoute) {
+                val hx = bx.value + 87f
+                val dash = PathEffect.dashPathEffect(floatArrayOf(12 * u, 10 * u))
+                if (hx < 675f) drawLine(NsColors.main, Offset(hx * u, 620 * u), Offset(675 * u, 620 * u), 6 * u, pathEffect = dash)
+                drawLine(NsColors.main, Offset(672 * u, 290 * u), Offset(672 * u, 620 * u), 6 * u, pathEffect = dash)
+            }
+        }
+
+        // parked cars (a full lot), and the words under two special bays
+        for (k in 0..6) {
+            val x = NsDims.bayX0 + NsDims.bayStep * k
+            if (k != NsDims.handoverBay) {
+                Image(
+                    painterResource(R.drawable.car_parked), null,
+                    Modifier.offset((x + 37).dp, (NsDims.bayTop + 38).dp).size(64.dp, 161.dp).alpha(0.42f),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
+            Image(
+                painterResource(R.drawable.car_parked), null,
+                Modifier.offset((x + 37).dp, (NsDims.bayBottomRow + 38).dp).size(64.dp, 161.dp)
+                    .graphicsLayer { rotationZ = 180f }.alpha(0.42f),
+                contentScale = ContentScale.FillBounds,
+            )
+            val word = when (k) { 0 -> R.string.bay_accessible; 6 -> R.string.bay_ev; else -> 0 }
+            if (word != 0) {
+                Box(Modifier.offset((x - 14).dp, (NsDims.bayTop + 208).dp).width(160.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(word), style = NsType.small, color = NsColors.text2,
+                        textAlign = TextAlign.Center, maxLines = 1, softWrap = false,
+                    )
+                }
+            }
+        }
+
+        // status word next to the handed-over bay
+        if (look != null) {
+            Row(Modifier.offset(760.dp, 304.dp), verticalAlignment = Alignment.CenterVertically) {
+                NsIcon(look.icon, look.color, 28.dp, strokeWidth = 2.4f, square = true)
+                Spacer(Modifier.width(10.dp))
+                Text(stringResource(look.tag), style = NsType.status, color = look.color, maxLines = 1, softWrap = false)
+                if ((phase == Phase.OFFER || phase == Phase.RESERVED) && offerMeters != null) {
+                    Text(
+                        " · ${offerMeters}m", style = NsType.status.copy(fontWeight = FontWeight.Normal),
+                        color = NsColors.text, maxLines = 1, softWrap = false,
+                    )
+                }
+            }
+        }
+
+        // cars: 180x180 box, the rotation only inside it
+        CarBox(ax, ay, arot, aAlpha, R.drawable.car_leaving, 8, 6, 64, 161)
+        CarBox(bx, by, brot, null, R.drawable.car_mine, 4, 8, 72, 141)
+
+        // pin on the searching car: stays upright and follows the car
+        Box(
+            Modifier.offset {
+                IntOffset(
+                    (bx.value - 24f).dp.roundToPx(),
+                    (by.value - (if (brot.value > 45f) 40f else 86f) - 46f).dp.roundToPx(),
+                )
+            }
+        ) { NsPin(48.dp) }
+
+        CarTag(stringResource(R.string.leaving_car), NsColors.leavingCar, ax, ay, arot, tagAAlpha)
+        CarTag(stringResource(R.string.searching_car), NsColors.main, bx, by, brot, tagBAlpha)
+    }
+}
+
+private fun DrawScope.bayEdge(color: Color, x: Float, w: Float, dashed: Boolean, u: Float) {
+    drawLine(
+        color, Offset(x, 48 * u), Offset(x, 288 * u), w,
+        pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(w * 2f, w * 1.6f)) else null,
+    )
+}
+
+@Composable
+private fun CarBox(
+    x: Anim, y: Anim, rot: Anim, alpha: Anim?, res: Int,
+    imgX: Int, imgY: Int, imgW: Int, imgH: Int,
+) {
+    Box(
+        Modifier
+            .offset { IntOffset((x.value - 90f).dp.roundToPx(), (y.value - 90f).dp.roundToPx()) }
+            .size(180.dp)
+            .graphicsLayer { this.alpha = alpha?.value ?: 1f }
+    ) {
+        Box(Modifier.offset(50.dp, 3.dp).size(80.dp, 173.dp).graphicsLayer { rotationZ = rot.value }) {
+            Image(
+                painterResource(res), null,
+                Modifier.offset(imgX.dp, imgY.dp).size(imgW.dp, imgH.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+        }
+    }
+}
+
+/** Name tag: in a bay it sits at the top of the map, in the lane it sits under the car. */
+@Composable
+private fun CarTag(text: String, color: Color, x: Anim, y: Anim, rot: Anim, alpha: Float) {
+    Box(
+        Modifier
+            .offset {
+                val top = if (y.value < 290f) 10f else y.value + (if (rot.value > 45f) 46f else 88f)
+                IntOffset((x.value - 90f).dp.roundToPx(), top.dp.roundToPx())
+            }
+            .size(180.dp, 28.dp)
+            .alpha(alpha),
+        contentAlignment = Alignment.Center,
+    ) { Text(text, style = NsType.tag, color = color, maxLines = 1, softWrap = false) }
+}
