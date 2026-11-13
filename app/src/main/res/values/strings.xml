@@ -13,7 +13,6 @@
     <!-- demo screen -->
     <string name="demo_title">한 화면 시연</string>
     <string name="demo_back">처음 화면으로</string>
-    <string name="now">지금</string>
     <string name="ready">대기 중</string>
     <string name="idle_hint">아래 시연 조작에서 재생을 누르거나, 차 신호를 하나씩 보내 보세요.</string>
     <string name="just">방금</string>

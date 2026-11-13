@@ -72,10 +72,6 @@ private val STEP_ICONS = listOf(NsPaths.SEARCH, NsPaths.DETECT, NsPaths.VOICE, N
 internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifier) {
     val offer = ui.phase == Phase.OFFER
     Column(modifier.heightIn(min = 360.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            if (offer) stringResource(R.string.now) + " · " + stringResource(R.string.step3_title) else stringResource(R.string.now),
-            style = NsType.body, color = NsColors.text2,
-        )
         if (offer) {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(

@@ -10,7 +10,6 @@
 
     <string name="demo_title">One-screen demo</string>
     <string name="demo_back">Back to start</string>
-    <string name="now">Now</string>
     <string name="ready">Ready</string>
     <string name="idle_hint">Press Play in the demo controls below, or send the car signals one by one.</string>
     <string name="just">Just now</string>
