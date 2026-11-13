@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
@@ -37,9 +38,9 @@ import androidx.compose.ui.unit.dp
  * The question itself is written by the card in DemoScreen.kt.
  */
 @Composable
-fun OfferActions(e: DemoEngine) {
+fun OfferActions(listening: Boolean, onYes: () -> Unit, onNo: () -> Unit, onTalk: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (e.listening) {
+        if (listening) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // pulsing dot = microphone is open
                 val pulse by rememberInfiniteTransition(label = "mic").animateFloat(
@@ -53,39 +54,65 @@ fun OfferActions(e: DemoEngine) {
         // Narrow cards (portrait half screen): yes/no side by side, "말하기" on its own row below
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val tight = maxWidth < 560.dp
-            val talk = if (e.listening) "듣는 중" else "말하기"
+            val talk = if (listening) "듣는 중" else "말하기"
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-                    FilledButton("네", { e.answerYes() }, Modifier.weight(1f))
-                    BasicButton("아니요", { e.answerNo() }, Modifier.weight(1f))
-                    if (!tight) BasicButton(talk, { e.listenForAnswer() }, Modifier.weight(0.8f))
+                    FilledButton("네", onYes, Modifier.weight(1f))
+                    BasicButton("아니요", onNo, Modifier.weight(1f))
+                    if (!tight) BasicButton(talk, onTalk, Modifier.weight(0.8f))
                 }
-                if (tight) BasicButton(talk, { e.listenForAnswer() }, Modifier.fillMaxWidth(), BtnSize.Small)
+                if (tight) BasicButton(talk, onTalk, Modifier.fillMaxWidth(), BtnSize.Small)
             }
         }
     }
 }
 
-/** Details panel: which signals came in and how the spot travels (developer view, not for the main screen). */
+/**
+ * The idea in one row, always visible: Car A's signals -> spot posted -> Car B received.
+ * Each step lights up (Pleos green dot) when it happens.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SignalSection(e: DemoEngine, modifier: Modifier = Modifier) {
-    val posted = e.spot?.status != null
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Car A 신호", fontSize = NsText.Label, color = NsColor.TextTertiary)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SignalChip("문", e.door)
-            SignalChip("벨트", e.belt)
-            SignalChip("내비", e.nav)
-            SignalChip("브레이크", e.brake)
+fun FlowBar(
+    door: Boolean, belt: Boolean, nav: Boolean, brake: Boolean, posted: Boolean, received: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Car A 신호", fontSize = NsText.Label, fontWeight = FontWeight.Bold, color = NsColor.TextTertiary, maxLines = 1)
+            SignalChip("문", door)
+            SignalChip("벨트", belt)
+            SignalChip("내비", nav)
+            SignalChip("브레이크", brake)
         }
-        Text("자리 공유 흐름", fontSize = NsText.Label, color = NsColor.TextTertiary)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SignalChip("Car A 신호", e.door || e.belt || e.nav || e.brake)
-            FlowArrow()
-            SignalChip("자리 등록", posted)
-            FlowArrow()
-            SignalChip("Car B 수신", e.offerMeters != null)
+        FlowArrow()
+        SignalChip("자리 등록", posted)
+        FlowArrow()
+        SignalChip("Car B 수신", received)
+    }
+}
+
+/** The last few events, one line each (the full log is in the details panel). */
+@Composable
+fun RecentLog(log: List<DemoEngine.LogItem>, modifier: Modifier = Modifier, count: Int = 4) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("최근 이벤트", fontSize = NsText.Label, color = NsColor.TextTertiary)
+        log.take(count).forEach { item ->
+            Row {
+                Text(
+                    item.who, fontSize = NsText.Label, fontWeight = FontWeight.Bold,
+                    color = when (item.who) {
+                        "Car B" -> NsColor.Positive
+                        "클라우드" -> NsColor.Active
+                        else -> NsColor.TextSecondary
+                    },
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(item.text, fontSize = NsText.Label, color = NsColor.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
@@ -110,14 +137,14 @@ private fun SignalChip(label: String, on: Boolean) {
 
 /** Live event log: what each car and the cloud did, newest first. */
 @Composable
-fun EventLog(e: DemoEngine, modifier: Modifier = Modifier) {
+fun EventLog(log: List<DemoEngine.LogItem>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier
             .fillMaxWidth()
             .background(NsColor.BgSecondary, NsChip)
             .padding(16.dp)
     ) {
-        items(e.log) { item ->
+        items(log) { item ->
             Column(Modifier.padding(vertical = 6.dp)) {
                 Row {
                     Text(item.time, fontSize = NsText.Label, color = NsColor.TextTertiary, fontFamily = FontFamily.Monospace)
@@ -139,9 +166,9 @@ fun EventLog(e: DemoEngine, modifier: Modifier = Modifier) {
 
 /** Small list: which SDK powers each part (Pleos in the pleos build). */
 @Composable
-fun SdkInfo(e: DemoEngine) {
+fun SdkInfo(lines: List<Pair<String, String>>) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        e.sdkLines.forEach { (part, sdk) ->
+        lines.forEach { (part, sdk) ->
             Row(verticalAlignment = Alignment.Top) {
                 Text(part, fontSize = NsText.Label, color = NsColor.TextTertiary, modifier = Modifier.weight(0.45f))
                 Text(

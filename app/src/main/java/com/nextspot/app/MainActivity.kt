@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface {
-                    var role by remember { mutableStateOf<String?>("demo") }
+                    var role by remember { mutableStateOf<String?>(null) }
                     when (role) {
                         null -> RoleScreen(onPick = { role = it })
                         "demo" -> DemoScreen(speaker = speaker, onBack = { role = null })

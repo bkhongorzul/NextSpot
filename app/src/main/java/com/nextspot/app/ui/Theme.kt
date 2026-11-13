@@ -5,27 +5,33 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -36,53 +42,55 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Pleos Connect look (values from PLEOS_DESIGN.md, dark mode, Hyundai theme).
- * Goal: look like the car's own apps. Gray steps for surfaces, white-alpha for text and dividers,
- * and Pleos meaning colors only for status.
+ * Pleos Connect look (values from PLEOS_DESIGN.md), dark and light, following the system setting.
+ * Dark is the main one (night demo). The mode is set once by [NsTheme]; every color below switches with it,
+ * including colors read while drawing on a canvas.
  */
 object NsColor {
+    /** Set by [NsTheme] from the system setting. Compose state, so everything that reads a color updates. */
+    var dark by mutableStateOf(true)
+        internal set
+
+    private fun pick(d: Long, l: Long) = Color(if (dark) d else l)
+    private val ink get() = if (dark) Color.White else Color(0xFF131417)   // text/icon base
+
     // background / surface
-    val BgPrimary = Color(0xFF1D1E21)
-    val BgSecondary = Color(0xFF131417)       // deeper background (map floor)
-    val SurfaceBasic = Color(0xFF1D1E21)      // basic card
-    val SurfaceHigh = Color(0xFF313236)       // emphasized card, popup
-    val SurfaceAccent = Color(0xFF44464E)     // selected surface
+    val BgPrimary get() = pick(0xFF1D1E21, 0xFFF7F8FA)
+    val BgSecondary get() = pick(0xFF131417, 0xFFFFFFFF)       // deeper background (map floor)
+    val SurfaceBasic get() = pick(0xFF1D1E21, 0xFFFFFFFF)
+    val SurfaceHigh get() = pick(0xFF313236, 0xFFEDEEF2)       // emphasized card, popup
+    val SurfaceAccent get() = pick(0xFF44464E, 0xFFE0E1E6)
 
     // gray steps (basic)
-    val Gray00 = Color(0xFF131417)
-    val Gray50 = Color(0xFF1D1E21)
-    val Gray100 = Color(0xFF313236)
-    val Gray200 = Color(0xFF44464E)
-    val Gray300 = Color(0xFF686A72)
-    val Gray400 = Color(0xFFA4A8AE)
-    val Gray500 = Color(0xFFC7C9CE)
-    val Gray600 = Color(0xFFE0E1E6)
-    val Gray700 = Color(0xFFEDEEF2)
-    val Gray900 = Color(0xFFFFFFFF)
+    val Gray300 get() = pick(0xFF686A72, 0xFFC7C9CE)
 
-    // text / icon (white with alpha)
-    val Text = Color.White
-    val TextSecondary = Color.White.copy(alpha = 0.84f)
-    val TextTertiary = Color.White.copy(alpha = 0.64f)
-    val TextQuaternary = Color.White.copy(alpha = 0.32f)
+    // text / icon
+    val Text get() = ink
+    val TextSecondary get() = ink.copy(alpha = 0.84f)
+    val TextTertiary get() = ink.copy(alpha = 0.64f)
+    val TextQuaternary get() = ink.copy(alpha = 0.32f)
 
     // dividers
-    val Divider1 = Color.White.copy(alpha = 0.05f)
-    val Divider2 = Color.White.copy(alpha = 0.10f)
-    val Divider3 = Color.White.copy(alpha = 0.20f)
+    val Divider2 get() = ink.copy(alpha = 0.10f)
 
     // buttons
-    val ButtonFilled = Color(0xFFE0E1E6)
-    val ButtonFilledPressed = Color(0xFFC7C9CE)
-    val OnButtonFilled = Color(0xFF131417)
-    val ButtonBasic = Color.White.copy(alpha = 0.05f)
-    val ButtonBasicPressed = Color.White.copy(alpha = 0.10f)
+    val ButtonFilled get() = pick(0xFFE0E1E6, 0xFF44464E)
+    val ButtonFilledPressed get() = pick(0xFFC7C9CE, 0xFF313236)
+    val OnButtonFilled get() = pick(0xFF131417, 0xFFFFFFFF)
+    val ButtonBasic get() = ink.copy(alpha = 0.05f)
+    val ButtonBasicPressed get() = ink.copy(alpha = 0.10f)
 
     // meaning colors
-    val Active = Color(0xFF00E074)            // spot confirmed, signal on
-    val Positive = Color(0xFF0082FF)          // route, guidance
-    val Likely = Color(0xFFFFA202)            // spot about to open
-    val Red = Color(0xFFFF4339)               // cancelled / withdrawn
+    val Active get() = pick(0xFF00E074, 0xFF02C265)            // spot confirmed, signal on
+    val Positive get() = pick(0xFF0082FF, 0xFF0064FF)          // route, guidance
+    val Likely get() = Color(0xFFFFA202)                       // spot about to open
+    val Red get() = pick(0xFFFF4339, 0xFFF62E24)               // cancelled / withdrawn
+
+    // cars in the lot drawing
+    val ParkedCar get() = pick(0xFF313236, 0xFFE0E1E6)         // a bit lighter than the floor: a full lot
+    val CarB get() = pick(0xFFE0E1E6, 0xFF44464E)              // clearly different from parked cars
+    val CarA get() = pick(0xFFA4A8AE, 0xFF8A8C94)              // the leaving car: mid gray
+    val Glass get() = pick(0xFF0B0C0E, 0xFF2A2C33)             // car windows
 }
 
 /** Text sizes: three steps only (title / body / label), from the Pleos type scale. */
@@ -124,39 +132,43 @@ private fun NsButton(
     ) { Text(label, fontSize = size.text, fontWeight = FontWeight.Bold, color = fg, maxLines = 1) }
 }
 
-/** Filled button: light gray with dark text (the main action). */
+/** Filled button: the main action. */
 @Composable
 fun FilledButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: BtnSize = BtnSize.Medium) =
     NsButton(label, onClick, modifier, size, NsColor.ButtonFilled, NsColor.ButtonFilledPressed, NsColor.OnButtonFilled)
 
-/** Basic button: white 5% surface (everything secondary). */
+/** Basic button: faint surface (everything secondary). */
 @Composable
 fun BasicButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: BtnSize = BtnSize.Medium) =
     NsButton(label, onClick, modifier, size, NsColor.ButtonBasic, NsColor.ButtonBasicPressed, NsColor.Text)
 
-/** 64x64 icon button (radius 16) with an icon drawn on a canvas, so no emoji or icon font is needed. */
+/** 64-high button with a canvas-drawn icon and a text label next to it (no emoji, no icon font). */
 @Composable
-fun NsIconButton(
-    description: String, onClick: () -> Unit, modifier: Modifier = Modifier,
+fun NsIconTextButton(
+    label: String, description: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     icon: DrawScope.(Color) -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
-    Box(
+    Row(
         modifier
-            .size(64.dp)
+            .height(64.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (pressed) NsColor.ButtonBasicPressed else NsColor.ButtonBasic)
             .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) { Canvas(Modifier.size(28.dp).padding(0.dp)) { icon(NsColor.Text) } }
+            .semantics { contentDescription = description }
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(28.dp)) { icon(NsColor.Text) }
+        Spacer(Modifier.width(12.dp))
+        Text(label, fontSize = NsText.Label, fontWeight = FontWeight.Bold, color = NsColor.Text, maxLines = 1)
+    }
 }
 
 /**
- * Asta Sans, loaded by name at runtime so the app builds and runs even when the font files are missing
- * (then the default font is used). Put the TTFs in app/src/main/res/font/ with lowercase names:
- *   asta_sans_regular.ttf, asta_sans_medium.ttf (optional), asta_sans_bold.ttf
+ * Asta Sans, loaded by name at runtime so the app still builds and runs if the files are missing
+ * (then the default font is used). Files: app/src/main/res/font/asta_sans_regular / _medium / _bold .ttf
  */
 @Composable
 private fun rememberNsFontFamily(): FontFamily {
@@ -174,9 +186,14 @@ private fun rememberNsFontFamily(): FontFamily {
     }
 }
 
-/** Wraps the demo screen so every Text uses the Pleos font (or the default if the files are missing). */
+/** true = always dark, whatever the system setting is. */
+private const val FORCE_DARK = true
+
+/** Wraps the demo screen: follows the system light/dark setting and applies the Pleos font. */
 @Composable
 fun NsTheme(content: @Composable () -> Unit) {
+    // Dark is forced for now (night demo). To follow the system light/dark setting again, use isSystemInDarkTheme().
+    NsColor.dark = FORCE_DARK || isSystemInDarkTheme()   // set before the content reads any color
     val family = rememberNsFontFamily()
     ProvideTextStyle(LocalTextStyle.current.merge(TextStyle(fontFamily = family)), content)
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +21,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun RoleScreen(onPick: (String) -> Unit) {
-    Column(
+    NsTheme { Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -28,18 +29,27 @@ fun RoleScreen(onPick: (String) -> Unit) {
         Text("NextSpot", fontSize = 40.sp, fontWeight = FontWeight.Bold)
         Text("주차 자리 핸드오버 · Parking Handover", fontSize = 18.sp)
         Spacer(Modifier.height(32.dp))
-        Button(onClick = { onPick("demo") }, modifier = Modifier.fillMaxWidth().height(72.dp)) {
-            Text("▶ 한 화면 데모 · One-screen demo", fontSize = 20.sp)
+        Button(
+            onClick = { onPick("demo") }, modifier = Modifier.fillMaxWidth().height(72.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NsColor.ButtonFilled, contentColor = NsColor.OnButtonFilled),
+        ) {
+            Text("한 화면 데모 · One-screen demo (Car A + Car B)", fontSize = 20.sp)
         }
         Spacer(Modifier.height(16.dp))
-        Button(onClick = { onPick("A") }, modifier = Modifier.fillMaxWidth().height(72.dp)) {
+        Button(
+            onClick = { onPick("A") }, modifier = Modifier.fillMaxWidth().height(72.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NsColor.SurfaceHigh, contentColor = NsColor.Text),
+        ) {
             Text("차 A · 떠나는 차 (Car A, leaving)", fontSize = 20.sp)
         }
         Spacer(Modifier.height(16.dp))
-        Button(onClick = { onPick("B") }, modifier = Modifier.fillMaxWidth().height(72.dp)) {
+        Button(
+            onClick = { onPick("B") }, modifier = Modifier.fillMaxWidth().height(72.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NsColor.SurfaceHigh, contentColor = NsColor.Text),
+        ) {
             Text("차 B · 자리 찾는 차 (Car B, searching)", fontSize = 20.sp)
         }
-    }
+    } }
 }
 
 /** Big status card at the top of each screen. */
