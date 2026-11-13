@@ -399,7 +399,7 @@ private fun SignalTile(t: Tile, modifier: Modifier) {
  */
 @Composable
 internal fun ClosingCard(
-    phase: Phase, credits: Long, onReplay: () -> Unit, onHome: () -> Unit, modifier: Modifier = Modifier,
+    phase: Phase, onReplay: () -> Unit, onHome: () -> Unit, modifier: Modifier = Modifier,
 ) {
     val done = phase == Phase.TAKEN
     Column(
@@ -411,7 +411,7 @@ internal fun ClosingCard(
             style = NsType.nowQuestion, color = NsColors.text,
         )
         Text(
-            if (done) stringResource(R.string.closing_done_body, credits) else stringResource(R.string.closing_cancel_body),
+            if (done) stringResource(R.string.closing_done_body) else stringResource(R.string.closing_cancel_body),
             style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2,
         )
         Row(Modifier.padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

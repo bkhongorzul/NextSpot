@@ -143,7 +143,7 @@ internal fun DemoContent(
                 contentAlignment = Alignment.Center,
             ) {
                 ClosingCard(
-                    ui.phase, ui.credits,
+                    ui.phase,
                     onReplay = { play(ui.phase == DemoEngine.Phase.WITHDRAWN) }, onHome = act.onBack,
                     modifier = Modifier.graphicsLayer { alpha = cardAlpha },
                 )

@@ -95,7 +95,7 @@
     <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">Spot connected</string>
+    <string name="closing_done_title">Spot handed to the next car</string>
     <string name="closing_replay">Watch again</string>
     <string name="closing_home">Back to start</string>
     <string name="closing_cancel_body">The leaving car stayed, so the offer was withdrawn.</string>
@@ -103,5 +103,5 @@
     <string name="sigs_seat">Driver seated (door, seatbelt)</string>
     <string name="sigs_nav">Destination set</string>
     <string name="sigs_brake">Parking brake released</string>
-    <string name="closing_done_body">The car that left earned 1 point. Total %1$d points</string>
+    <string name="closing_done_body">The car that left earned 1 point.</string>
 </resources>
