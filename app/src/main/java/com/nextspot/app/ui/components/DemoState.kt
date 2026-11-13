@@ -45,8 +45,8 @@ internal fun whoOf(raw: String) = when (raw) {
 
 internal fun Who.color(): Color = when (this) {
     Who.LEAVING -> NsColors.leavingCar
-    Who.SEARCHING -> NsColors.main
-    Who.SYSTEM -> NsColors.text2
+    Who.SEARCHING -> NsColors.text
+    Who.SYSTEM -> NsColors.main      // NextSpot is the one that connects the two cars
 }
 
 @Composable

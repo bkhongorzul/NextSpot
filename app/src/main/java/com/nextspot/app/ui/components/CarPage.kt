@@ -1,6 +1,14 @@
 package com.nextspot.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Arrangement
@@ -39,12 +47,20 @@ internal fun CarPage(title: String, onBack: () -> Unit, content: @Composable Col
 /** Big square button (100 high, large type). [primary] = the one yellow button of the screen. */
 @Composable
 internal fun CarButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = false) {
-    NsButton(
-        label, onClick, modifier, NsDims.bigButtonH,
-        if (primary) NsColors.main else NsColors.surfaceHigh,
-        if (primary) NsColors.onMain else NsColors.text,
-        NsType.button, padH = 24.dp,
-    )
+    // every button turns yellow while it is pressed, so a touch is clearly answered
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val yellow = primary || pressed
+    Row(
+        modifier.height(NsDims.bigButtonH).clip(NsShape.button)
+            .background(if (yellow) NsColors.main else NsColors.surfaceHigh)
+            .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(label, style = NsType.button, color = if (yellow) NsColors.onMain else NsColors.text, maxLines = 1)
+    }
 }
 
 /** A status block: small label, then the state in large type. */
