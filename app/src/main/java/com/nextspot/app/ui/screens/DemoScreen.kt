@@ -3,6 +3,8 @@ package com.nextspot.app.ui.screens
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,12 +25,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.nextspot.app.R
 import com.nextspot.app.car.Speaker
 import com.nextspot.app.ui.DemoEngine
+import com.nextspot.app.ui.components.ClosingCard
 import com.nextspot.app.ui.components.DemoActions
 import com.nextspot.app.ui.components.DemoStrip
 import com.nextspot.app.ui.components.DemoUi
@@ -79,10 +83,20 @@ fun DemoScreen(speaker: Speaker, onBack: () -> Unit) {
 }
 
 @Composable
-internal fun DemoContent(ui: DemoUi, act: DemoActions, startRecordOpen: Boolean = false, startSignalsOpen: Boolean = false) {
+internal fun DemoContent(
+    ui: DemoUi, act: DemoActions, startRecordOpen: Boolean = false, startSignalsOpen: Boolean = false,
+    startSettled: Boolean = false,
+) {
     var recordOpen by remember { mutableStateOf(startRecordOpen) }
     var signalsOpen by remember { mutableStateOf(startSignalsOpen) }
     var playingCancel by remember { mutableStateOf(false) }   // which flow was started last (for its pause button)
+    // the phase whose last car move has finished: the closing card shows only then
+    var settled by remember { mutableStateOf<DemoEngine.Phase?>(if (startSettled) ui.phase else null) }
+    LaunchedEffect(ui.phase) { if (!startSettled && settled != ui.phase) settled = null }
+    val play = { cancel: Boolean -> playingCancel = cancel; act.onPlay(cancel) }
+    val closing = settled == ui.phase && (ui.phase == DemoEngine.Phase.TAKEN || ui.phase == DemoEngine.Phase.WITHDRAWN)
+
+    val cardAlpha by animateFloatAsState(if (closing) 1f else 0f, tween(300), label = "card")
 
     NsWindow {
         Column(Modifier.fillMaxSize()) {
@@ -96,8 +110,16 @@ internal fun DemoContent(ui: DemoUi, act: DemoActions, startRecordOpen: Boolean 
                 // left: the lot and a one-line ticker
                 Column(Modifier.width(NsDims.mapW), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     Box {
-                        LotMap(ui.phase, ui.offerMeters)
+                        LotMap(ui.phase, ui.offerMeters, onSettled = { settled = it })
                         if (recordOpen) RecordPanel(ui.log, Modifier.align(Alignment.BottomCenter))
+                        if (cardAlpha > 0.01f) {
+                            ClosingCard(
+                                ui.phase, ui.credits,
+                                onReplay = { play(ui.phase == DemoEngine.Phase.WITHDRAWN) }, onHome = act.onBack,
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp)
+                                    .graphicsLayer { alpha = cardAlpha },
+                            )
+                        }
                     }
                     Ticker(ui.log, recordOpen, { recordOpen = !recordOpen })
                 }
@@ -113,7 +135,7 @@ internal fun DemoContent(ui: DemoUi, act: DemoActions, startRecordOpen: Boolean 
         }
 
         DemoStrip(
-            ui, act, playingCancel, { cancel -> playingCancel = cancel; act.onPlay(cancel) },
+            ui, act, playingCancel, play,
             signalsOpen, { signalsOpen = !signalsOpen }, Modifier.align(Alignment.BottomCenter),
         )
         if (signalsOpen) {

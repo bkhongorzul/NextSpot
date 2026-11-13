@@ -90,7 +90,7 @@ private const val BAY_Y = 168f
 
 /** The parking lot: 1080x880, drawn in dp exactly as in DESIGN.md section 6.2 / 6.3. */
 @Composable
-internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifier) {
+internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifier, onSettled: (Phase) -> Unit = {}) {
     val look = lookOf(phase)
     val departing = phase == Phase.CONFIRMED || phase == Phase.TAKEN
     // Constant speed: every move is linear and takes distance / speed (no slow-fast-slow per leg).
@@ -124,6 +124,7 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                 by.animateTo(420f, leg1)
                 by.animateTo(BAY_Y, tween(ms(0f, 420f - BAY_Y), easing = ease))
                 bParked = true
+                onSettled(phase)   // the searching car is in the bay: the closing card may appear
             }
             leg != null && leg.x >= bx.value -> {   // never roll backwards (e.g. after answering "no")
                 val spec = tween<Float>(ms(leg.x - bx.value, 0f), easing = ease)
@@ -132,6 +133,7 @@ internal fun LotMap(phase: Phase, offerMeters: Int?, modifier: Modifier = Modifi
                     launch { brot.animateTo(90f, spec) }
                     bx.animateTo(leg.x, spec)
                 }
+                if (phase == Phase.WITHDRAWN) onSettled(phase)
             }
         }
     }

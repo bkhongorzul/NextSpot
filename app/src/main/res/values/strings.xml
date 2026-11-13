@@ -99,4 +99,10 @@
     <string name="log_withdrawn">제안 자동 취소</string>
     <string name="log_bcancel">음성 안내 “자리가 취소됐어요. 다른 자리를 찾을게요.”</string>
     <string name="log_thanks">음성 안내 “자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”</string>
+
+    <!-- closing card -->
+    <string name="closing_done_title">자리 넘김 완료</string>
+    <string name="closing_replay">다시 보기</string>
+    <string name="closing_home">시작 화면으로</string>
+    <string name="closing_cancel_body">제안을 거뒀어요. 다음 기회에 다시 안내할게요</string>
 </resources>

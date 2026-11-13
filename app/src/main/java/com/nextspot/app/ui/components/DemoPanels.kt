@@ -95,13 +95,6 @@ internal fun NowPanel(ui: DemoUi, act: DemoActions, modifier: Modifier = Modifie
                     color = if (ui.phase == Phase.TAKEN) NsColors.ok else NsColors.text,
                 )
                 Text(caption, style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2)
-                if (ui.phase == Phase.TAKEN) {
-                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Bottom) {
-                        Text("+1", style = NsType.bigPoint, color = NsColors.main)
-                        Text(stringResource(R.string.points), style = NsType.step, color = NsColors.text, modifier = Modifier.padding(bottom = 4.dp))
-                        Text(stringResource(R.string.total, ui.credits), style = NsType.step, color = NsColors.text2, modifier = Modifier.padding(bottom = 4.dp))
-                    }
-                }
             }
         }
     }
@@ -374,5 +367,44 @@ private fun SignalTile(t: Tile, modifier: Modifier) {
             )
         }
         if (t.done) NsIcon(NsPaths.CHECK, NsColors.main, 24.dp, strokeWidth = 3f, square = true)
+    }
+}
+
+/**
+ * Closing card over the lower part of the map, when a flow has finished: handed over (with the point)
+ * or cancelled. Same place and shape for both. No measured values: only what the app really knows.
+ */
+@Composable
+internal fun ClosingCard(
+    phase: Phase, credits: Long, onReplay: () -> Unit, onHome: () -> Unit, modifier: Modifier = Modifier,
+) {
+    val done = phase == Phase.TAKEN
+    Column(
+        modifier.width(760.dp).clip(NsShape.button).background(NsColors.popover).padding(40.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Text(
+            stringResource(if (done) R.string.closing_done_title else R.string.cancelled_title),
+            style = NsType.nowQuestion, color = if (done) NsColors.ok else NsColors.cancel,
+        )
+        if (done) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Bottom) {
+                Text("+1", style = NsType.bigPoint, color = NsColors.main)
+                Text(stringResource(R.string.points), style = NsType.step, color = NsColors.text, modifier = Modifier.padding(bottom = 4.dp))
+                Text(stringResource(R.string.total, credits), style = NsType.step, color = NsColors.text2, modifier = Modifier.padding(bottom = 4.dp))
+            }
+        } else {
+            Text(stringResource(R.string.closing_cancel_body), style = NsType.caption.copy(lineBreak = NsType.keepAll), color = NsColors.text2)
+        }
+        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            NsButton(
+                stringResource(R.string.closing_replay), onReplay, Modifier.weight(1f), NsDims.bigButtonH,
+                NsColors.main, NsColors.onMain, NsType.yesNo, padH = 0.dp,
+            )
+            NsButton(
+                stringResource(R.string.closing_home), onHome, Modifier.weight(1f), NsDims.bigButtonH,
+                NsColors.surfaceHigh, NsColors.text, NsType.yesNo, padH = 0.dp,
+            )
+        }
     }
 }

@@ -95,4 +95,10 @@
     <string name="log_withdrawn">Offer cancelled automatically</string>
     <string name="log_bcancel">Voice: “That spot was cancelled. Finding another.”</string>
     <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
+
+    <!-- closing card -->
+    <string name="closing_done_title">Spot handed over</string>
+    <string name="closing_replay">Watch again</string>
+    <string name="closing_home">Back to start</string>
+    <string name="closing_cancel_body">The offer was taken back. We will guide you again next time.</string>
 </resources>

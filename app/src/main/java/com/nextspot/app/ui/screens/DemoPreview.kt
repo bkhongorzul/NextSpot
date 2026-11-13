@@ -37,8 +37,8 @@ private fun sample(phase: Phase, listening: Boolean = false) = DemoUi(
 )
 
 @Composable
-private fun Shot(phase: Phase, listening: Boolean = false, record: Boolean = false, signals: Boolean = false) =
-    NsTheme { DemoContent(sample(phase, listening), DemoActions(), record, signals) }
+private fun Shot(phase: Phase, listening: Boolean = false, record: Boolean = false, signals: Boolean = false, settled: Boolean = false) =
+    NsTheme { DemoContent(sample(phase, listening), DemoActions(), record, signals, settled) }
 
 // ---- every phase at the wide size ----
 @Preview(name = "1 대기", widthDp = 1700, heightDp = 1184)
@@ -90,3 +90,11 @@ fun PreviewSignals() { Shot(Phase.LIKELY, signals = true) }
 @Preview(name = "작은 화면 1280x800", widthDp = 1280, heightDp = 800)
 @Composable
 fun PreviewSmall() { Shot(Phase.OFFER) }
+
+@Preview(name = "마무리 카드 (넘김 완료)", widthDp = 1700, heightDp = 1184)
+@Composable
+fun PreviewClosingDone() { Shot(Phase.TAKEN, settled = true) }
+
+@Preview(name = "마무리 카드 (출발 취소)", widthDp = 1700, heightDp = 1184)
+@Composable
+fun PreviewClosingCancelled() { Shot(Phase.WITHDRAWN, settled = true) }
