@@ -79,3 +79,4 @@ Android Studio 왼쪽 아래 **Build Variants** 창에서 고릅니다. Pick it 
 - 음성 대답 "응"을 Pleos SpeechToText SDK로 받기 (지금은 버튼). Voice "yes" via Pleos STT (now a button).
 - 음성 안내를 Pleos TextToSpeech SDK로 바꾸기 (지금은 안드로이드 기본 TTS). Swap to Pleos TTS.
 - 크레딧으로 우선 배정, 전용 그룹 관리. Credit-based priority, group management.
+- 자리 찾기 시작 계기 표현: (1) 내비 목적지 근처 도착 (2) 운전자 음성 "주차 자리 찾아줘". 화면에 계기를 보여 주려면 `DemoEngine`에 `searchTrigger` 상태와 음성 명령 인식(Pleos STT)이 필요합니다 (zol). Show how "find a spot" starts: near the destination, or by voice.

@@ -204,15 +204,15 @@ class DemoEngine(
     private var offerPending = false
 
     /**
-     * The spot is posted as "opening soon" at once, but the offer comes a moment later (DESIGN.md section 8:
-     * 2.8 s in the auto play, 1.2 s by hand), so the "opening soon" step can be seen and read first.
+     * The spot is posted as "opening soon" at once, but the offer comes a moment later (one even beat in the auto play,
+     * 1.2 s by hand), so the "opening soon" step can be seen and read first.
      */
     private fun offer(s: Spot) {
         if (offerPending) return
         offerPending = true
         val run = runStart
         scope.launch {
-            delay(if (autoPlaying) 2800 else 1200)
+            delay(if (autoPlaying) STEP_MS else 1200)
             offerPending = false
             if (run != runStart || !searching || accepted || asking || parked) return@launch
             if (spot?.status == SpotStatus.WITHDRAWN) return@launch
@@ -316,10 +316,13 @@ class DemoEngine(
         reset {
             autoPlaying = true
             autoJob = scope.launch {
+                // One even beat (STEP_MS) between the steps the viewer has to read:
+                // searching -> seated -> destination set -> "opening soon" -> voice offer
                 delay(800); startSearch()
-                delay(2500); onDoorOpenedAndClosed()
-                delay(400); onSeatbeltBuckled()
-                delay(800); onNavigationSet()
+                delay(STEP_MS); onDoorOpenedAndClosed(); onSeatbeltBuckled()
+                delay(STEP_MS)
+                nav = true; add("Car A", str(R.string.log_nav))     // the signal arrives and is shown ...
+                delay(STEP_MS); detector.onNavigationSet()          // ... and only one beat later the spot is posted
                 waitUntil(15_000) { accepted }
                 delay(3000)
                 if (cancelCase) {
@@ -357,6 +360,8 @@ class DemoEngine(
     }
 
     companion object {
+        /** The even beat between the steps of the auto play (ms). */
+        const val STEP_MS = 2500L
         const val CAR_A = "car-A"
         const val CAR_B = "car-B"
     }
