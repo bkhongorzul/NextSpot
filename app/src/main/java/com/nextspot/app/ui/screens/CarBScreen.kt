@@ -1,4 +1,4 @@
-package com.nextspot.app.ui
+package com.nextspot.app.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +34,9 @@ import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
 import com.nextspot.app.data.SpotStatus
+import com.nextspot.app.ui.components.StatusCard
+import com.nextspot.app.ui.components.statusLabel
+import com.nextspot.app.ui.theme.NsTheme
 import com.nextspot.app.data.distanceMeters
 import kotlin.math.roundToInt
 
@@ -100,6 +103,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         onDispose { reg?.remove() }
     }
 
+    NsTheme {
+        androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = com.nextspot.app.ui.theme.NsColors.appBg) {
     Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState())) {
         Row { TextButton(onClick = onBack) { Text("← 역할 바꾸기 · Change role") } }
         Text("차 B · 자리 찾는 차 (Car B, searching)", fontSize = 24.sp)
@@ -177,6 +182,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(72.dp),
                 ) { Text("주차 자리 찾기 · Find parking", fontSize = 22.sp) }
             }
+        }
+    }
         }
     }
 }

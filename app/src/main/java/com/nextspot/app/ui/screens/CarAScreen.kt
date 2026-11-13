@@ -1,4 +1,4 @@
-package com.nextspot.app.ui
+package com.nextspot.app.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +33,9 @@ import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
 import com.nextspot.app.data.SpotStatus
+import com.nextspot.app.ui.components.StatusCard
+import com.nextspot.app.ui.components.statusLabel
+import com.nextspot.app.ui.theme.NsTheme
 
 private const val CAR_A_ID = "car-A"
 
@@ -91,6 +94,8 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
         onDispose { reg?.remove() }
     }
 
+    NsTheme {
+        androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = com.nextspot.app.ui.theme.NsColors.appBg) {
     Column(
         Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState())
     ) {
@@ -132,5 +137,7 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         Text("기록 · Log", fontSize = 16.sp)
         logs.forEach { Text("• $it", fontSize = 14.sp) }
+    }
+        }
     }
 }
