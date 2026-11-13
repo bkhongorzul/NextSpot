@@ -196,7 +196,7 @@ private fun nowText(p: Phase): Pair<String, String> = when (p) {
 
 /** Mic icon + the hint. While the microphone is open the icon pulses and the hint says so. */
 @Composable
-private fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
+internal fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
     // only runs while listening, and is read while drawing (no recomposition per frame)
     val pulse = if (listening) rememberInfiniteTransition(label = "mic").animateFloat(
         0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulse",
@@ -220,7 +220,7 @@ private fun VoiceHint(listening: Boolean, onTalk: () -> Unit) {
  * ([listening]) they are brighter and taller. Motion is only read while drawing.
  */
 @Composable
-private fun VoiceWave(listening: Boolean, modifier: Modifier = Modifier) {
+internal fun VoiceWave(listening: Boolean, modifier: Modifier = Modifier) {
     val t by rememberInfiniteTransition(label = "wave").animateFloat(
         0f, 1f, infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "t",
     )

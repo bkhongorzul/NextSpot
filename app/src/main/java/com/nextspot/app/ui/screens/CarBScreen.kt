@@ -42,6 +42,14 @@ import com.nextspot.app.R
 import com.nextspot.app.ui.components.CarButton
 import com.nextspot.app.ui.components.CarCard
 import com.nextspot.app.ui.components.CarPage
+import com.nextspot.app.ui.components.VoiceHint
+import com.nextspot.app.ui.components.VoiceWave
+import com.nextspot.app.ui.theme.NsShape
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import com.nextspot.app.ui.theme.NsColors
 import com.nextspot.app.ui.theme.NsType
 import com.nextspot.app.ui.components.statusLabel
@@ -66,7 +74,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     val declined = remember { mutableStateListOf<String>() }
     val announced = remember { mutableStateListOf<String>() }
     var accepted by remember { mutableStateOf<Spot?>(null) }
-    var message by remember { mutableStateOf("주차 자리 찾기를 눌러 주세요 · Tap Find parking") }
+    var message by remember { mutableStateOf("목적지 근처에 가면 자리를 찾아요 · Searching starts near the destination") }
 
     DisposableEffect(Unit) {
         navigator.start()
@@ -140,8 +148,23 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 }
 
                 offer != null -> {
-                    CarCard("${offer.metersFromCarB()} m 앞에 자리가 납니다", "A spot is opening ${offer.metersFromCarB()} m ahead")
-                    Text(statusLabel(offer.status), style = NsType.caption, color = NsColors.text2)
+                    // likely = "might open" (yellow), confirmed = "leaving now" (green): the change must be visible
+                    val confirmedNow = offer.status == SpotStatus.CONFIRMED || offer.confirmed
+                    CarCard(
+                        "${offer.metersFromCarB()} m 앞 · ${offer.metersFromCarB()} m ahead",
+                        if (confirmedNow) "자리가 확정됐어요" else "곧 자리가 날 것 같아요",
+                    )
+                    OfferBadge(confirmedNow)
+                    // voice offer: the driver answers by voice in the car; the buttons stand in here
+                    // TODO(zol): connect Platform.voiceInput(context).listen(...) here -
+                    //   YES -> same as the "Yes" button (repo.accept), NO -> declined.add(offer.id),
+                    //   UNKNOWN -> ask again; start listening after the TTS offer ends; pass listening = true while the mic is open
+                    VoiceHint(listening = false, onTalk = { /* TODO(zol): open the microphone again */ })
+                    VoiceWave(listening = false)
+                    Text(
+                        "실차에서는 음성으로 수락 · In the car, the driver accepts by voice",
+                        style = NsType.caption, color = NsColors.text3,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CarButton(
                             "응, 갈게 · Yes",
@@ -166,17 +189,43 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 searching -> CarCard("찾는 중 · Searching", "근처 자리를 기다리는 중…")
 
                 else -> {
-                    Text(message, style = NsType.caption, color = NsColors.text2)
+                    CarCard("목적지로 이동 중 · Driving to destination", message)
+                    // Search starts by itself near the destination (or by voice) - not by a "find parking" button.
+                    // SIMULATOR: this button stands in for the navigation arrival event.
+                    // TODO: in the real car replace with the NaviHelper arrival event:
+                    //   Platform.carContext(context).start(onNearDestination = { searching = true }, onPosition = { _, _ -> })
+                    //   (pleos threshold is NEAR_DESTINATION_M = 500)
+                    // TODO(zol): second start path - the driver asks by voice ("주차할 곳 찾아줘") -> searching = true
+                    //   (needs a keyword in VoiceInput.listen)
+                    Text(
+                        "SIMULATOR · 실차에서는 내비 도착 이벤트로 자동 시작 · In the car: starts automatically on navigation arrival",
+                        style = NsType.caption, color = NsColors.text2,
+                    )
                     CarButton(
-                        "주차 자리 찾기 · Find parking",
+                        "목적지 500m 전 도착 · Arrive 500 m from destination",
                         {
                             searching = true
                             speaker.say("근처 주차 자리를 찾을게요.")
                         },
-                        Modifier.fillMaxWidth(), primary = true,
+                        Modifier.fillMaxWidth(),
                     )
                 }
             }
         }
+    }
+}
+
+/** "Likely opening" (yellow) turns into "Confirmed" (green): the two stages Car B sees. */
+@Composable
+private fun OfferBadge(confirmed: Boolean) {
+    val bg by animateColorAsState(if (confirmed) NsColors.ok else NsColors.main, tween(300), label = "badge")
+    Row(
+        Modifier.clip(NsShape.button).background(bg).padding(horizontal = 28.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            if (confirmed) "출발 확정 · Confirmed" else "곧 빌 가능성 · Likely opening",
+            style = NsType.button, color = NsColors.onMain, maxLines = 1,
+        )
     }
 }
