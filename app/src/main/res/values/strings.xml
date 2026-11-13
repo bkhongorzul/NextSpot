@@ -99,7 +99,7 @@
     <string name="log_thanks">음성 안내 “자리를 넘겨드렸어요. 포인트 1점이 쌓였어요.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">자리 넘김 완료</string>
+    <string name="closing_done_title">빈자리 연결 완료</string>
     <string name="closing_replay">다시 보기</string>
     <string name="closing_home">시작 화면으로</string>
     <string name="closing_cancel_body">나가는 차가 떠나지 않아 제안을 거뒀어요.</string>

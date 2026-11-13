@@ -95,7 +95,7 @@
     <string name="log_thanks">Voice: “Your spot went to the next car. 1 point added.”</string>
 
     <!-- closing card -->
-    <string name="closing_done_title">Handover complete</string>
+    <string name="closing_done_title">Empty spot connected</string>
     <string name="closing_replay">Watch again</string>
     <string name="closing_home">Back to start</string>
     <string name="closing_cancel_body">The leaving car stayed, so the offer was withdrawn.</string>
