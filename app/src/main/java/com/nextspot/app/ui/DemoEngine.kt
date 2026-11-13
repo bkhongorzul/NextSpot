@@ -201,7 +201,26 @@ class DemoEngine(
         }
     }
 
+    private var offerPending = false
+
+    /**
+     * The spot is posted as "opening soon" at once, but the offer comes a moment later (DESIGN.md section 8:
+     * 2.8 s in the auto play, 1.2 s by hand), so the "opening soon" step can be seen and read first.
+     */
     private fun offer(s: Spot) {
+        if (offerPending) return
+        offerPending = true
+        val run = runStart
+        scope.launch {
+            delay(if (autoPlaying) 2800 else 1200)
+            offerPending = false
+            if (run != runStart || !searching || accepted || asking || parked) return@launch
+            if (spot?.status == SpotStatus.WITHDRAWN) return@launch
+            offerNow(s)
+        }
+    }
+
+    private fun offerNow(s: Spot) {
         val m = metersFromB(s)
         offerMeters = m
         asking = true
@@ -283,7 +302,7 @@ class DemoEngine(
         spot = null; lastSpotStatus = null
         door = false; belt = false; nav = false; brake = false
         searching = false; asking = false; listening = false; accepted = false; parked = false
-        offerMeters = null
+        offerMeters = null; offerPending = false
         log.clear()
         add("시스템", str(R.string.log_reset))
         repo.clearGroup(DemoPlaces.GROUP) {
