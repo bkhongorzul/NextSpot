@@ -25,10 +25,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nextspot.app.R
 import com.nextspot.app.car.Platform
 import com.nextspot.app.car.Speaker
 import com.nextspot.app.data.DemoPlaces
@@ -71,6 +74,9 @@ private fun Spot.metersFromCarB(): Int =
 @Composable
 fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     val context = LocalContext.current
+    // spoken lines are read with context.getString because they are used inside callbacks (not composables)
+    val language = LocalConfiguration.current.locales[0].language
+    LaunchedEffect(language) { speaker.setLanguage(if (language == "en") "en" else "ko") }
     val repo = remember { SpotRepository() }
     val navigator = remember { Platform.navigator(context) }
 
@@ -83,7 +89,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     var parked by remember { mutableStateOf(false) }       // B6
     var thanked by remember { mutableStateOf(false) }
     var refused by remember { mutableStateOf(false) }      // the driver said "아니요" to the offer
-    var searchNote by remember { mutableStateOf("비슷한 경로로 움직이는 차들을 확인하고 있어요") }
+    var searchNote by remember { mutableStateOf(context.getString(R.string.b_note_default)) }
 
     DisposableEffect(Unit) {
         navigator.start()
@@ -108,7 +114,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         val o = offer ?: return@LaunchedEffect
         if (o.id !in announced) {
             announced.add(o.id)
-            speaker.say("${o.metersFromCarB()}미터 앞에 자리가 곧 납니다. 갈까요?")
+            speaker.say(context.getString(R.string.b_say_offer, o.metersFromCarB()))
         }
     }
 
@@ -118,8 +124,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         val reg = id?.let {
             repo.listenSpot(it) { s ->
                 if (s != null && s.status == SpotStatus.WITHDRAWN) {
-                    speaker.say("자리가 취소됐어요. 다른 자리를 찾을게요.")
-                    searchNote = "자리가 취소돼서 다시 찾는 중이에요"
+                    speaker.say(context.getString(R.string.b_say_cancelled))
+                    searchNote = context.getString(R.string.b_note_cancelled)
                     accepted = null
                 } else if (s != null && s.status == SpotStatus.MATCHED) {
                     accepted = s   // keep the latest copy (e.g. confirmed = true)
@@ -134,18 +140,18 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
             if (ok) {
                 refused = false
                 accepted = o
-                navigator.navigateTo(o.lat, o.lng, "NextSpot 주차 자리")
-                speaker.say("그 자리로 안내할게요.")
+                navigator.navigateTo(o.lat, o.lng, context.getString(R.string.b_poi_name))
+                speaker.say(context.getString(R.string.b_say_guide))
             } else {
                 declined.add(o.id)
-                speaker.say("다른 차가 먼저 가져갔어요.")
+                speaker.say(context.getString(R.string.b_say_taken_other))
             }
         }
     }
 
     fun parkNow(acc: Spot) {
         repo.markTaken(acc)
-        speaker.say("주차 완료. 감사합니다.")
+        speaker.say(context.getString(R.string.b_say_parked))
         accepted = null
         searching = false
         parked = true
@@ -159,9 +165,9 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 CenterColumn {
                     StatusMark(MarkKind.FILLED)
                     Spacer(Modifier.height(40.dp))
-                    Headline("주차 완료", center = true)
+                    Headline(stringResource(R.string.b_parked_title), center = true)
                     Spacer(Modifier.height(12.dp))
-                    SubText("자리를 양보해준 차량 덕분에 더 빨리 찾았어요", center = true)
+                    SubText(stringResource(R.string.b_parked_sub), center = true)
                     Spacer(Modifier.height(44.dp))
                     // TODO(zol): send the thanks to Car A (not stored anywhere yet)
                     Row(
@@ -170,7 +176,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        Text(if (thanked) "고마움을 전했어요" else "고마워요 보내기", style = NsType.button.copy(fontSize = 30.sp), color = NsCar.text)
+                        Text(stringResource(if (thanked) R.string.b_thanks_sent else R.string.b_thanks_send), style = NsType.button.copy(fontSize = 30.sp), color = NsCar.text)
                     }
                 }
             }
@@ -180,25 +186,25 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 CenterColumn {
                     StatusMark(MarkKind.RING)
                     Spacer(Modifier.height(40.dp))
-                    Headline("자리가 확정됐어요", center = true)
+                    Headline(stringResource(R.string.b_confirmed_title), center = true)
                     Spacer(Modifier.height(12.dp))
-                    SubText("이제 편하게 주차하시면 돼요", center = true)
+                    SubText(stringResource(R.string.b_confirmed_sub), center = true)
                     Spacer(Modifier.height(44.dp))
-                    HintRow("브레이크 신호로 주차 완료를 자동으로 확인할게요")
+                    HintRow(stringResource(R.string.b_hint_auto))
                 }
                 // Simulator: stands in for Car B's own parking brake signal.
                 // TODO: in the real car, finish when Car B's parking brake is set (CarSignals / Pleos Vehicle SDK) - no button.
-                Box(Modifier.align(Alignment.BottomEnd)) { SimButton("시뮬레이터 · 주차 브레이크 체결") { parkNow(acc) } }
+                Box(Modifier.align(Alignment.BottomEnd)) { SimButton(stringResource(R.string.b_sim_brake)) { parkNow(acc) } }
             }
 
             // B4 on the way: Car A's live state is shown
             acc != null -> {
                 Column(Modifier.fillMaxSize()) {
-                    Eyebrow("안내 중")
+                    Eyebrow(stringResource(R.string.b_guiding))
                     Spacer(Modifier.height(10.dp))
-                    Headline("지정 자리로 이동 중")
+                    Headline(stringResource(R.string.b_going_title))
                     Spacer(Modifier.height(10.dp))
-                    SubText("${acc.metersFromCarB()}m 앞")
+                    SubText(stringResource(R.string.b_meters_ahead, acc.metersFromCarB()))
                     Spacer(Modifier.weight(1f))
                     StepTrack(current = 2)
                     Spacer(Modifier.weight(1f))
@@ -208,8 +214,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                                 NsIcon(NsPaths.CLOCK, NsCar.accent, 34.dp, strokeWidth = 1.8f)
                             }
                             Column {
-                                Text("앞차가 출발을 준비하고 있어요", style = NsType.title.copy(fontSize = 32.sp), color = NsCar.text)
-                                Text("자리가 곧 확정돼요", style = NsType.caption, color = NsCar.text2)
+                                Text(stringResource(R.string.b_front_preparing), style = NsType.title.copy(fontSize = 32.sp), color = NsCar.text)
+                                Text(stringResource(R.string.b_soon_confirmed), style = NsType.caption, color = NsCar.text2)
                             }
                         }
                     }
@@ -217,12 +223,12 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     // TODO(zol): releasing the matched spot is not in SpotRepository yet; for now this only leaves the screen state
                     Box(
                         Modifier.fillMaxWidth().clip(NsCar.shape).background(NsCar.cardHigh)
-                            .clickableBox { declined.add(acc.id); accepted = null; refused = false; searchNote = "다른 자리를 찾는 중이에요" }
+                            .clickableBox { declined.add(acc.id); accepted = null; refused = false; searchNote = context.getString(R.string.b_note_other) }
                             .padding(vertical = 34.dp),
                         contentAlignment = Alignment.Center,
-                    ) { Text("다른 자리 찾기", style = NsType.button.copy(fontSize = 32.sp), color = NsCar.text) }
+                    ) { Text(stringResource(R.string.b_other_spot), style = NsType.button.copy(fontSize = 32.sp), color = NsCar.text) }
                     Spacer(Modifier.height(16.dp))
-                    Box(Modifier.align(Alignment.End)) { SimButton("시뮬레이터 · 주차 브레이크 체결") { parkNow(acc) } }
+                    Box(Modifier.align(Alignment.End)) { SimButton(stringResource(R.string.b_sim_brake)) { parkNow(acc) } }
                 }
             }
 
@@ -230,19 +236,19 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
             offer != null -> {
                 val confirmedNow = offer.status == SpotStatus.CONFIRMED || offer.confirmed
                 Column(Modifier.fillMaxSize()) {
-                    Eyebrow("후보 발견")
+                    Eyebrow(stringResource(R.string.b_found))
                     Spacer(Modifier.height(10.dp))
-                    Headline(if (confirmedNow) "앞차가 출발해요" else "곧 빈자리가 생겨요")
+                    Headline(stringResource(if (confirmedNow) R.string.b_title_leaving else R.string.b_title_soon))
                     Spacer(Modifier.height(28.dp))
                     CarBox(pad = 36.dp) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             NsIcon(NsPaths.PIN, NsCar.accent, 44.dp, strokeWidth = 1.8f)
                             Spacer(Modifier.width(22.dp))
-                            Text("약 ${offer.metersFromCarB()}m 앞", style = NsType.title.copy(fontSize = 38.sp), color = NsCar.text)
+                            Text(stringResource(R.string.b_about_meters, offer.metersFromCarB()), style = NsType.title.copy(fontSize = 38.sp), color = NsCar.text)
                             Spacer(Modifier.weight(1f))
                             // likely = might open, confirmed = leaving now (the change must be visible): plain yellow words
                             Text(
-                                if (confirmedNow) "출발 확정" else "곧 비는 자리",
+                                stringResource(if (confirmedNow) R.string.b_status_confirmed else R.string.b_status_likely),
                                 style = NsType.bodyBold.copy(fontSize = 30.sp), color = NsCar.accent,
                             )
                         }
@@ -252,7 +258,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                             NsIcon(if (confirmedNow) NsPaths.BRAKE else NsPaths.DETECT, NsCar.text2, 32.dp, strokeWidth = 1.8f)
                             Text(
-                                if (confirmedNow) "앞차가 브레이크를 풀고 출발해요" else "앞차 운전자가 출발을 준비하고 있어요",
+                                stringResource(if (confirmedNow) R.string.b_why_confirmed else R.string.b_why_likely),
                                 style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2,
                             )
                         }
@@ -266,15 +272,15 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         CenterColumn {
                             MicBadge()
-                            Text("이 자리로 갈까요?", style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
+                            Text(stringResource(R.string.b_voice_q), style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
                             Spacer(Modifier.height(12.dp))
-                            SubText("이 자리로 안내할게요", center = true)
+                            SubText(stringResource(R.string.b_voice_sub), center = true)
                         }
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        TextLink("네", { accept(offer) })
+                        TextLink(stringResource(R.string.yes), { accept(offer) })
                         Text("·", color = NsCar.text3, style = NsType.body)
-                        TextLink("아니요", { declined.add(offer.id); refused = true })
+                        TextLink(stringResource(R.string.no), { declined.add(offer.id); refused = true })
                     }
                 }
             }
@@ -284,14 +290,14 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                 CenterColumn {
                     Radar()
                     Spacer(Modifier.height(36.dp))
-                    Headline("근처 자리를 찾는 중", center = true)
+                    Headline(stringResource(R.string.b_searching), center = true)
                     Spacer(Modifier.height(12.dp))
                     SubText(searchNote, center = true)
                     Spacer(Modifier.height(36.dp))
-                    HintRow("잠시만 기다려주세요")
+                    HintRow(stringResource(R.string.b_wait))
                     if (refused) {
                         Spacer(Modifier.height(12.dp))
-                        TextLink("방금 자리 다시 보기", { declined.clear(); refused = false; searchNote = "비슷한 경로로 움직이는 차들을 확인하고 있어요" })
+                        TextLink(stringResource(R.string.b_see_again), { declined.clear(); refused = false; searchNote = context.getString(R.string.b_note_default) })
                     }
                 }
             }
@@ -311,21 +317,21 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     ) {
                         NsIcon(NsPaths.PIN, NsCar.text2, 34.dp, strokeWidth = 1.8f)
                         Spacer(Modifier.width(16.dp))
-                        Text("목적지까지 500m · 근처에서 자리를 찾아볼까요?", style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2)
+                        Text(stringResource(R.string.b_dist_line), style = NsType.bodyBold.copy(fontSize = 28.sp), color = NsCar.text2)
                     }
                     CarBox(pad = 36.dp) {   // height follows the content, so nothing is cut off
                         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             MicBadge()
-                            Text("\"자리 찾아줘\"", style = NsType.logo.copy(fontSize = 58.sp, lineHeight = 68.sp), color = NsCar.text)
+                            Text(stringResource(R.string.b_say_find), style = NsType.logo.copy(fontSize = 58.sp, lineHeight = 68.sp), color = NsCar.text)
                             Spacer(Modifier.height(10.dp))
-                            SubText("이렇게 말하면 바로 찾기 시작해요", center = true)
+                            SubText(stringResource(R.string.b_say_find_sub), center = true)
                         }
                     }
                     Spacer(Modifier.weight(1f))
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextLink("또는 화면을 탭해서 시작", {
+                        TextLink(stringResource(R.string.b_tap_start), {
                             searching = true
-                            speaker.say("근처 주차 자리를 찾을게요.")
+                            speaker.say(context.getString(R.string.b_say_start))
                         })
                     }
                 }
@@ -334,12 +340,12 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
             // driving to the destination (before B1)
             else -> {
                 CenterColumn {
-                    Headline("목적지로 이동 중", center = true)
+                    Headline(stringResource(R.string.b_driving_title), center = true)
                     Spacer(Modifier.height(12.dp))
-                    SubText("목적지 근처에 가면 자리를 찾아드려요", center = true)
+                    SubText(stringResource(R.string.b_driving_sub), center = true)
                 }
                 // Simulator: stands in for the navigation arrival event (see the TODO at B1)
-                Box(Modifier.align(Alignment.BottomEnd)) { SimButton("시뮬레이터 · 목적지 500m 전 도착") { arrived = true } }
+                Box(Modifier.align(Alignment.BottomEnd)) { SimButton(stringResource(R.string.b_sim_arrive)) { arrived = true } }
             }
         }
     }

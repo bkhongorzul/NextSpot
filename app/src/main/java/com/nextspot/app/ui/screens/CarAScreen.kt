@@ -29,9 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nextspot.app.R
 import com.nextspot.app.car.CarSignals
 import com.nextspot.app.car.DepartureDetector
 import com.nextspot.app.car.Platform
@@ -71,6 +74,11 @@ private const val CAR_A_ID = "car-A"
 @Composable
 fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     val context = LocalContext.current
+    // spoken lines are read here because the Firestore callback below is not a composable
+    val sayMatched = stringResource(R.string.a_say_matched)
+    val sayTaken = stringResource(R.string.a_say_taken)
+    val language = LocalConfiguration.current.locales[0].language
+    LaunchedEffect(language) { speaker.setLanguage(if (language == "en") "en" else "ko") }
     val repo = remember { SpotRepository() }
     var spotId by remember { mutableStateOf<String?>(null) }
     var spot by remember { mutableStateOf<Spot?>(null) }
@@ -134,9 +142,9 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                 val status = s?.status
                 if (status != lastStatus) {
                     when (status) {
-                        SpotStatus.MATCHED -> speaker.say("다음 차가 이 자리로 오고 있어요.")
+                        SpotStatus.MATCHED -> speaker.say(sayMatched)
                         SpotStatus.TAKEN -> {
-                            speaker.say("자리를 넘겨드렸어요. 크레딧 1점이 적립됐어요.")
+                            speaker.say(sayTaken)
                             reward = true   // big "+1 credit" for a moment (the voice may not be audible)
                         }
                         SpotStatus.WITHDRAWN -> clearSensors()   // the detector starts over; so does the display
@@ -162,8 +170,8 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         // top right: demo only (cancel the departure / start over); the real car needs neither
         CarFrame(onBack, right = {
-            TextLink("출발 안 함", { detector.cancel(); clearSensors() }, NsCar.text3)
-            TextLink("처음부터", {
+            TextLink(stringResource(R.string.a_not_leaving), { detector.cancel(); clearSensors() }, NsCar.text3)
+            TextLink(stringResource(R.string.a_restart), {
                 detector.reset()
                 clearSensors()
                 spotId = null
@@ -180,20 +188,22 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                     CenterColumn {
                         StatusMark(MarkKind.FILLED)
                         Spacer(Modifier.height(36.dp))
-                        Headline("출발이 확정됐어요", center = true)
+                        Headline(stringResource(R.string.a_confirmed_title), center = true)
                         Spacer(Modifier.height(12.dp))
-                        SubText("뒤차에게 자리 안내를 시작했어요", center = true)
+                        SubText(stringResource(R.string.a_confirmed_sub), center = true)
                         Spacer(Modifier.height(36.dp))
                         Pill(
-                            when (status) {
-                                SpotStatus.TAKEN -> "자리 전달 완료"
-                                SpotStatus.MATCHED -> "뒤차가 오고 있어요"
-                                else -> "뒤차를 기다리는 중"
-                            },
+                            stringResource(
+                                when (status) {
+                                    SpotStatus.TAKEN -> R.string.a_pill_taken
+                                    SpotStatus.MATCHED -> R.string.a_pill_matched
+                                    else -> R.string.a_pill_waiting
+                                },
+                            ),
                         )
                         if (credits > 0) {
                             Spacer(Modifier.height(20.dp))
-                            Text("크레딧 $credits", style = NsType.body, color = NsCar.text3)
+                            Text(stringResource(R.string.a_credits, credits), style = NsType.body, color = NsCar.text3)
                         }
                     }
                 }
@@ -203,20 +213,20 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                     CenterColumn {
                         StatusMark(MarkKind.CANCEL)
                         Spacer(Modifier.height(36.dp))
-                        Headline("출발이 취소됐어요", center = true)
+                        Headline(stringResource(R.string.a_cancel_title), center = true)
                         Spacer(Modifier.height(12.dp))
-                        SubText("다시 주차하신 것 같아요 · 자리 안내를 중단했어요", center = true)
+                        SubText(stringResource(R.string.a_cancel_sub), center = true)
                         Spacer(Modifier.height(36.dp))
-                        Pill("안내 중단됨", cancel = true)
+                        Pill(stringResource(R.string.a_pill_stopped), cancel = true)
                     }
                 }
 
                 // A2 waiting: registered, waits for the parking brake
                 registered && a1Done -> {
                     CenterColumn {
-                        Headline("뒤차에게 알렸어요", center = true)
+                        Headline(stringResource(R.string.a_told_title), center = true)
                         Spacer(Modifier.height(12.dp))
-                        SubText("출발하시면 자동으로 뒤차에게 자리를 넘겨드려요", center = true)
+                        SubText(stringResource(R.string.a_told_sub), center = true)
                         Spacer(Modifier.height(36.dp))
                         CarBox(Modifier.width(1000.dp), pad = 36.dp) {
                             Row(
@@ -225,15 +235,14 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                             ) {
                                 CarGlyph(NsCar.accent, 44.dp)
                                 Text(
-                                    if (status == SpotStatus.MATCHED) "1대의 차량이 이 자리를 기다리고 있어요"
-                                    else "근처 차량에게 이 자리를 알렸어요",
+                                    stringResource(if (status == SpotStatus.MATCHED) R.string.a_one_waiting else R.string.a_nearby_told),
                                     style = NsType.title.copy(fontSize = 30.sp), color = NsCar.text,
                                 )
                             }
                         }
                         Spacer(Modifier.height(36.dp))
                         HintRow(
-                            "브레이크를 놓으면 출발이 확정돼요",
+                            stringResource(R.string.a_hint_brake),
                             icon = { NsIcon(NsPaths.BRAKE, NsCar.text2, 34.dp, strokeWidth = 1.8f) },
                         )
                     }
@@ -242,20 +251,20 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
                 // A1 signal detected: door / belt, destination set (no driver action needed)
                 seat || nav || registered -> {
                     CenterColumn {
-                        Headline(if (registered) "곧 출발 준비가 됐네요" else "출발 신호를 확인하고 있어요", center = true)
+                        Headline(stringResource(if (registered) R.string.a_detect_title_registered else R.string.a_detect_title), center = true)
                         Spacer(Modifier.height(12.dp))
-                        SubText(if (registered) "근처에서 자리를 찾는 차에게 알릴게요" else "문, 안전벨트, 내비를 차가 알아서 확인해요", center = true)
+                        SubText(stringResource(if (registered) R.string.a_detect_sub_registered else R.string.a_detect_sub), center = true)
                         Spacer(Modifier.height(36.dp))
-                        HintRow(if (registered) "주변 차량에게 자리를 알리는 중" else "신호를 기다리는 중")
+                        HintRow(stringResource(if (registered) R.string.a_hint_notifying else R.string.a_hint_waiting_signal))
                     }
                 }
 
                 // nothing yet: parked, waiting for the first signal
                 else -> {
                     CenterColumn {
-                        Headline("주차 중이에요", center = true)
+                        Headline(stringResource(R.string.a_idle_title), center = true)
                         Spacer(Modifier.height(12.dp))
-                        SubText("출발 신호를 기다리고 있어요", center = true)
+                        SubText(stringResource(R.string.a_idle_sub), center = true)
                     }
                 }
             }
@@ -263,10 +272,10 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
             // The four car sensors, always at the bottom. In the real car a cell turns yellow when the car reports
             // the signal by itself; in the simulator a tap sends the same signal (no separate button panel).
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                SensorCell("문 열림", door, Modifier.weight(1f)) { sensors.onDoorOpenedAndClosed() }
-                SensorCell("안전벨트 착용", belt, Modifier.weight(1f)) { sensors.onSeatbeltBuckled() }
-                SensorCell("내비 목적지 설정", nav, Modifier.weight(1f)) { sensors.onNavigationSet() }
-                SensorCell("브레이크 해제", brake, Modifier.weight(1f)) { sensors.onParkingBrakeReleased() }
+                SensorCell(stringResource(R.string.a_sensor_door), door, Modifier.weight(1f)) { sensors.onDoorOpenedAndClosed() }
+                SensorCell(stringResource(R.string.a_sensor_belt), belt, Modifier.weight(1f)) { sensors.onSeatbeltBuckled() }
+                SensorCell(stringResource(R.string.a_sensor_nav), nav, Modifier.weight(1f)) { sensors.onNavigationSet() }
+                SensorCell(stringResource(R.string.a_sensor_brake), brake, Modifier.weight(1f)) { sensors.onParkingBrakeReleased() }
             }
           }
         }
@@ -280,9 +289,9 @@ fun CarAScreen(speaker: Speaker, onBack: () -> Unit) {
         ) {
             CarBox(Modifier.width(900.dp), pad = 56.dp) {
                 CenterColumn2 {
-                    Text("+1 크레딧", style = NsType.logo.copy(fontSize = 80.sp, lineHeight = 92.sp), color = NsCar.accent)
+                    Text(stringResource(R.string.a_reward_title), style = NsType.logo.copy(fontSize = 80.sp, lineHeight = 92.sp), color = NsCar.accent)
                     Spacer(Modifier.height(10.dp))
-                    SubText("주차 자리를 넘겨드렸어요", center = true)
+                    SubText(stringResource(R.string.a_reward_sub), center = true)
                 }
             }
         }
