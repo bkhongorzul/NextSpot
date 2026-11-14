@@ -90,6 +90,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     var refused by remember { mutableStateOf(false) }      // the driver said "아니요" to the offer
     var searchNote by remember { mutableStateOf("비슷한 경로로 움직이는 차들을 확인하고 있어요") }
     var listening by remember { mutableStateOf(false) }
+    var voiceNote by remember { mutableStateOf<String?>(null) }   // feedback under the mic: not heard / no mic
     var lastLeavingCar by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(Unit) {
@@ -104,11 +105,21 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
 
     /** Listen once for the driver's answer. Calls back with what was heard. */
     fun listenOnce(onHeard: (VoiceInput.Answer, String) -> Unit) {
-        if (!voice.available) return            // no mic / no recognizer: the touch links still work
+        if (!voice.available) {                  // no mic permission / no recognizer: the touch links still work
+            voiceNote = "마이크를 사용할 수 없어요 · 아래 글자를 눌러주세요"
+            return
+        }
+        voice.stop()
         listening = true
+        voiceNote = null
         voice.listen(
-            onAnswer = { a, heard -> listening = false; onHeard(a, heard) },
-            onUnavailable = { listening = false },
+            onAnswer = { a, heard ->
+                listening = false
+                voiceNote = if (a == VoiceInput.Answer.UNKNOWN && heard.isBlank()) "못 들었어요 · 마이크를 눌러 다시 말해 주세요"
+                    else "들은 말: \"$heard\""
+                onHeard(a, heard)
+            },
+            onUnavailable = { listening = false; voiceNote = "마이크를 사용할 수 없어요 · 아래 글자를 눌러주세요" },
         )
     }
 
@@ -117,15 +128,17 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         speaker.say("근처 주차 자리를 찾을게요.")
     }
 
+    /** B1: listen for "자리 찾아줘" (or a plain "네"). Also used when the mic button is tapped. */
+    fun listenForStart() = listenOnce { a, heard ->
+        val wants = a == VoiceInput.Answer.YES || listOf("자리", "찾아", "주차").any { heard.contains(it) }
+        if (wants && !searching) startSearch()
+        else if (!searching && heard.isNotBlank()) voiceNote = "들은 말: \"$heard\" · \"자리 찾아줘\"라고 말해 주세요"
+    }
+
     // B1: ask once by voice, then listen for "자리 찾아줘" (or a plain "네")
     LaunchedEffect(arrived) {
         if (!arrived || searching) return@LaunchedEffect
-        speaker.say("목적지 근처예요. 자리를 찾아드릴까요?") {
-            listenOnce { a, heard ->
-                val wants = a == VoiceInput.Answer.YES || listOf("자리", "찾아", "주차").any { heard.contains(it) }
-                if (wants && !searching) startSearch()
-            }
-        }
+        speaker.say("목적지 근처예요. 자리를 찾아드릴까요?") { listenForStart() }
     }
 
     // While searching: listen for open spots in our group
@@ -333,7 +346,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     // no extra card here: the voice prompt stands free, the only card is the info above
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         CenterColumn {
-                            MicBadge()
+                            MicBadge(Modifier.clickable { hearOffer(offer, retry = false) })
+                            VoiceStatus(listening, voiceNote)
                             Text("이 자리로 갈까요?", style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
                             Spacer(Modifier.height(12.dp))
                             SubText("이 자리로 안내할게요", center = true)
@@ -381,7 +395,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                     CarBox(pad = 36.dp) {   // height follows the content, so nothing is cut off
                         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            MicBadge()
+                            MicBadge(Modifier.clickable { listenForStart() })
+                            VoiceStatus(listening, voiceNote)
                             Text("\"자리 찾아줘\"", style = NsType.logo.copy(fontSize = 58.sp, lineHeight = 68.sp), color = NsCar.text)
                             Spacer(Modifier.height(10.dp))
                             SubText("이렇게 말하면 바로 찾기 시작해요", center = true)
@@ -410,3 +425,18 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
 
 private fun Modifier.clickableBox(onClick: () -> Unit): Modifier =
     this.clickable(onClick = onClick)
+
+/** Small line under the mic: "listening", what was heard, or why the mic can't be used. Tap the mic to listen again. */
+@Composable
+private fun VoiceStatus(listening: Boolean, note: String?) {
+    Text(
+        when {
+            listening -> "듣는 중… 지금 말하세요"
+            note != null -> note
+            else -> "마이크를 눌러 말하기"
+        },
+        style = NsType.bodyBold.copy(fontSize = 24.sp),
+        color = if (listening) NsCar.accent else NsCar.text2,
+        modifier = Modifier.padding(bottom = 16.dp),
+    )
+}
