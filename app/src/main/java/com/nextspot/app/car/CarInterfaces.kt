@@ -14,6 +14,8 @@ interface CarSignals {
         fun onParkingBrakeReleased()
         /** Driver's seatbelt buckled (Pleos Vehicle SDK, Seat). Counts like "driver got in". */
         fun onSeatbeltBuckled() {}
+        /** This car just parked (parking brake set or gear moved into P). Used by Car B to finish by itself. */
+        fun onParked() {}
     }
 
     fun start(listener: Listener)

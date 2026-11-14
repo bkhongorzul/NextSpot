@@ -28,6 +28,7 @@ import ai.pleos.playground.vehicle.listener.GearSelectionListener
 import ai.pleos.playground.vehicle.listener.SeatBeltBuckledStateListener
 import ai.pleos.playground.vehicle.listener.TelltaleInfoListener
 import android.content.Context
+import com.nextspot.app.BuildConfig
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -112,6 +113,7 @@ private class PleosCarSignals(private val context: Context) : CarSignals {
             } ?: return
             val on = brake.state != TelltaleState.OFF
             if (brakeWasOn == true && !on) main.post { listener?.onParkingBrakeReleased() }
+            if (brakeWasOn == false && on) main.post { listener?.onParked() }
             brakeWasOn = on
         }
         override fun onFailed(e: Exception) { Log.w(TAG, "Telltale listener failed", e) }
@@ -121,6 +123,9 @@ private class PleosCarSignals(private val context: Context) : CarSignals {
         override fun onSelected(gear: VehicleGear?) {
             if (lastGear == VehicleGear.GEAR_PARK && gear != VehicleGear.GEAR_PARK) {
                 main.post { listener?.onParkingBrakeReleased() }
+            }
+            if (lastGear != null && lastGear != VehicleGear.GEAR_PARK && gear == VehicleGear.GEAR_PARK) {
+                main.post { listener?.onParked() }
             }
             lastGear = gear
         }
@@ -248,7 +253,12 @@ private class PleosSpeaker(context: Context) : Speaker {
     private var failed = false
     private var pendingDone: (() -> Unit)? = null
 
-    override val label: String get() = if (ready && !failed) "Pleos TextToSpeech" else "Android TTS (fallback)"
+    private var server = false
+    override val label: String get() = when {
+        ready && !failed && server -> "Pleos TextToSpeech (server + on-device)"
+        ready && !failed -> "Pleos TextToSpeech (on-device)"
+        else -> "Android TTS (fallback)"
+    }
 
     init {
         safe("Pleos TTS") {
@@ -264,6 +274,14 @@ private class PleosSpeaker(context: Context) : Speaker {
                         override fun onError(errorType: TtsError) = finish()
                         override fun onUpdatedRms(rms: Double) = Unit
                     })
+                    // Server voice needs the Pleos project key (secrets.properties). On-device works without it.
+                    if (hasKey()) safe("Pleos TTS registerApp") {
+                        tts.registerApp(BuildConfig.PLEOS_CLIENT_ID, BuildConfig.PLEOS_CLIENT_SECRET,
+                            object : ai.pleos.playground.tts.listener.OnServerConnectionListener {
+                                override fun onConnected() { server = true; Log.i(TAG, "Pleos TTS registered") }
+                                override fun onFailed(errorType: TtsError) { Log.w(TAG, "Pleos TTS registerApp failed: $errorType") }
+                            })
+                    }
                 }
                 override fun onFailure(errorType: TtsError) {
                     failed = true
@@ -306,7 +324,12 @@ private class PleosVoiceInput(context: Context) : VoiceInput {
     private var ready = false
     private var onAnswer: ((VoiceInput.Answer, String) -> Unit)? = null
 
-    override val label: String get() = if (ready) "Pleos SpeechToText" else "Android speech (fallback)"
+    private var server = false
+    override val label: String get() = when {
+        ready && server -> "Pleos SpeechToText (server + on-device)"
+        ready -> "Pleos SpeechToText (on-device)"
+        else -> "Android speech (fallback)"
+    }
     override val available: Boolean get() = ready || fallback.available
 
     private val resultListener = object : ResultListener {
@@ -335,6 +358,13 @@ private class PleosVoiceInput(context: Context) : VoiceInput {
                     ready = true
                     stt.setLocale(Locale.KOREAN)
                     stt.addListener(resultListener)
+                    if (hasKey()) safe("Pleos STT registerApp") {
+                        stt.registerApp(BuildConfig.PLEOS_CLIENT_ID, BuildConfig.PLEOS_CLIENT_SECRET,
+                            object : ai.pleos.playground.stt.listener.OnServerConnectionListener {
+                                override fun onConnected() { server = true; Log.i(TAG, "Pleos STT registered") }
+                                override fun onFailed(errorType: SttError) { Log.w(TAG, "Pleos STT registerApp failed: $errorType") }
+                            })
+                    }
                 }
                 override fun onFailure(errorType: SttError) {
                     Log.w(TAG, "Pleos STT init failed: $errorType -> Android speech")
@@ -357,6 +387,8 @@ private class PleosVoiceInput(context: Context) : VoiceInput {
         fallback.stop()
     }
 }
+
+private fun hasKey() = BuildConfig.PLEOS_CLIENT_ID.isNotBlank() && BuildConfig.PLEOS_CLIENT_SECRET.isNotBlank()
 
 private inline fun safe(what: String, block: () -> Unit) {
     try { block() } catch (e: Throwable) { Log.w(TAG, "$what not available", e) }
