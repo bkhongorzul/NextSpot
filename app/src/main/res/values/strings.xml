@@ -194,4 +194,14 @@
     <string name="b_driving_sub">목적지 근처에 가면 자리를 찾아드려요</string>
     <string name="b_sim_arrive">시뮬레이터 · 목적지 500m 전 도착</string>
     <string name="b_poi_name">NextSpot 주차 자리</string>
+    <string name="b_mic_unavailable">마이크를 사용할 수 없어요 · 아래 글자를 눌러주세요</string>
+    <string name="b_not_heard">못 들었어요 · 마이크를 눌러 다시 말해 주세요</string>
+    <string name="b_heard">들은 말: “%1$s”</string>
+    <string name="b_heard_start_hint">들은 말: “%1$s” · “자리 찾아줘”라고 말해 주세요</string>
+    <string name="b_say_arrived">목적지 근처예요. 자리를 찾아드릴까요?</string>
+    <string name="b_say_ok_other">알겠어요. 다른 자리를 찾을게요.</string>
+    <string name="b_say_retry">네 또는 아니요로 말씀해 주세요.</string>
+    <string name="b_tap_start_listening">듣는 중… 또는 화면을 탭해서 시작</string>
+    <string name="b_listening_now">듣는 중… 지금 말하세요</string>
+    <string name="b_tap_mic">마이크를 눌러 말하기</string>
 </resources>

@@ -190,4 +190,14 @@
     <string name="b_driving_sub">I\'ll find a spot when you get close</string>
     <string name="b_sim_arrive">Simulator · 500 m from destination</string>
     <string name="b_poi_name">NextSpot parking spot</string>
+    <string name="b_mic_unavailable">Microphone unavailable · tap the text below</string>
+    <string name="b_not_heard">Didn\'t hear you · tap the mic and speak again</string>
+    <string name="b_heard">Heard: “%1$s”</string>
+    <string name="b_heard_start_hint">Heard: “%1$s” · Say “Find me a spot”</string>
+    <string name="b_say_arrived">You\'re near your destination. Shall I find a spot?</string>
+    <string name="b_say_ok_other">Okay. I\'ll find another spot.</string>
+    <string name="b_say_retry">Please say yes or no.</string>
+    <string name="b_tap_start_listening">Listening… or tap the screen to start</string>
+    <string name="b_listening_now">Listening… speak now</string>
+    <string name="b_tap_mic">Tap the mic to speak</string>
 </resources>

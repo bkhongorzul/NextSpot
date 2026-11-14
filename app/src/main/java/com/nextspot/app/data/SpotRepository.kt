@@ -127,6 +127,25 @@ class SpotRepository {
     }
 
     /** Car B parked: mark the spot taken and give the leaving car +1 credit. */
+    /** Car B gives up a spot it reserved: the spot goes back to the open list for other cars. */
+    fun release(spotId: String, myCar: String) {
+        val ref = spots.document(spotId)
+        db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            if (snap.getString("matchedCar") == myCar && snap.getString("status") == SpotStatus.MATCHED) {
+                val back = if (snap.getBoolean("confirmed") == true) SpotStatus.CONFIRMED else SpotStatus.LIKELY
+                tx.update(ref, mapOf("status" to back, "matchedCar" to null, "updatedAt" to System.currentTimeMillis()))
+            }
+            null
+        }
+    }
+
+    /** Car B's "고마워요" (thanks) to the car that handed over the spot. */
+    fun sendThanks(toCar: String) {
+        db.collection("credits").document(toCar)
+            .set(mapOf("thanks" to com.google.firebase.firestore.FieldValue.increment(1)), com.google.firebase.firestore.SetOptions.merge())
+    }
+
     fun markTaken(spot: Spot) {
         setStatus(spot.id, SpotStatus.TAKEN)
         credits.document(spot.leavingCar)

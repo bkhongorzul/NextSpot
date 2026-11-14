@@ -1,8 +1,17 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
+}
+
+// Pleos project key (Client ID / Secret from Pleos Playground "My Project").
+// Kept in secrets.properties in the project folder, which is in .gitignore and never goes to GitHub.
+val secrets = Properties().apply {
+    val f = rootProject.file("secrets.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -18,6 +27,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1"
+        buildConfigField("String", "PLEOS_CLIENT_ID", "\"${secrets.getProperty("PLEOS_CLIENT_ID", "")}\"")
+        buildConfigField("String", "PLEOS_CLIENT_SECRET", "\"${secrets.getProperty("PLEOS_CLIENT_SECRET", "")}\"")
     }
 
     // Two build variants:
@@ -51,6 +62,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

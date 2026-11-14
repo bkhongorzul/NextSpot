@@ -14,6 +14,8 @@ interface CarSignals {
         fun onParkingBrakeReleased()
         /** Driver's seatbelt buckled (Pleos Vehicle SDK, Seat). Counts like "driver got in". */
         fun onSeatbeltBuckled() {}
+        /** This car just parked (parking brake set or gear moved into P). Used by Car B to finish by itself. */
+        fun onParked() {}
     }
 
     fun start(listener: Listener)
@@ -55,8 +57,8 @@ interface VoiceInput {
     fun stop()
 
     companion object {
-        private val YES = listOf("네", "예", "응", "어", "좋아", "가자", "갈게", "yes", "yeah", "ok", "okay")
-        private val NO = listOf("아니", "아뇨", "싫어", "괜찮아", "no", "nope")
+        private val YES = listOf("네", "예", "응", "어", "좋아", "가자", "갈게", "yes", "yeah", "ok", "okay", "예스", "오케이", "그래")
+        private val NO = listOf("아니", "아뇨", "싫어", "괜찮아", "no", "nope", "노우", "됐어")
 
         fun classify(heard: List<String>): Answer {
             for (h in heard) {

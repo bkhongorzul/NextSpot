@@ -33,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nextspot.app.R
 import com.nextspot.app.car.Platform
+import com.nextspot.app.car.CarSignals
 import com.nextspot.app.car.Speaker
+import com.nextspot.app.car.VoiceInput
 import com.nextspot.app.data.DemoPlaces
 import com.nextspot.app.data.Spot
 import com.nextspot.app.data.SpotRepository
@@ -74,11 +76,14 @@ private fun Spot.metersFromCarB(): Int =
 @Composable
 fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     val context = LocalContext.current
-    // spoken lines are read with context.getString because they are used inside callbacks (not composables)
+    // spoken lines / notes are read with context.getString because they are used inside callbacks (not composables)
     val language = LocalConfiguration.current.locales[0].language
     LaunchedEffect(language) { speaker.setLanguage(if (language == "en") "en" else "ko") }
     val repo = remember { SpotRepository() }
     val navigator = remember { Platform.navigator(context) }
+    val voice = remember { Platform.voiceInput(context) }          // Pleos SpeechToText in the pleos build
+    val carContext = remember { Platform.carContext(context) }     // Pleos NaviHelper: near the destination
+    val ownSignals = remember { Platform.carSignals(context) }     // Car B's own parking brake / gear
 
     var arrived by remember { mutableStateOf(false) }      // near the destination: B1
     var searching by remember { mutableStateOf(false) }    // B2 and on
@@ -90,10 +95,56 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
     var thanked by remember { mutableStateOf(false) }
     var refused by remember { mutableStateOf(false) }      // the driver said "아니요" to the offer
     var searchNote by remember { mutableStateOf(context.getString(R.string.b_note_default)) }
+    var listening by remember { mutableStateOf(false) }
+    var voiceNote by remember { mutableStateOf<String?>(null) }   // feedback under the mic: not heard / no mic
+    var lastLeavingCar by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(Unit) {
         navigator.start()
-        onDispose { navigator.stop() }
+        // Real car: NaviHelper reports < 500 m to the destination -> B1 appears by itself
+        carContext.start(
+            onNearDestination = { if (!arrived && !searching && !parked) arrived = true },
+            onPosition = { _, _ -> },
+        )
+        onDispose { navigator.stop(); carContext.stop(); voice.stop() }
+    }
+
+    /** Listen once for the driver's answer. Calls back with what was heard. */
+    fun listenOnce(onHeard: (VoiceInput.Answer, String) -> Unit) {
+        if (!voice.available) {                  // no mic permission / no recognizer: the touch links still work
+            voiceNote = context.getString(R.string.b_mic_unavailable)
+            return
+        }
+        voice.stop()
+        listening = true
+        voiceNote = null
+        voice.listen(
+            onAnswer = { a, heard ->
+                listening = false
+                voiceNote = if (a == VoiceInput.Answer.UNKNOWN && heard.isBlank()) context.getString(R.string.b_not_heard)
+                    else context.getString(R.string.b_heard, heard)
+                onHeard(a, heard)
+            },
+            onUnavailable = { listening = false; voiceNote = context.getString(R.string.b_mic_unavailable) },
+        )
+    }
+
+    fun startSearch() {
+        searching = true
+        speaker.say(context.getString(R.string.b_say_start))
+    }
+
+    /** B1: listen for "자리 찾아줘" (or a plain "네"). Also used when the mic button is tapped. */
+    fun listenForStart() = listenOnce { a, heard ->
+        val wants = a == VoiceInput.Answer.YES || listOf("자리", "찾아", "주차", "find", "spot", "park").any { heard.contains(it) }
+        if (wants && !searching) startSearch()
+        else if (!searching && heard.isNotBlank()) voiceNote = context.getString(R.string.b_heard_start_hint, heard)
+    }
+
+    // B1: ask once by voice, then listen for "자리 찾아줘" (or a plain "네")
+    LaunchedEffect(arrived) {
+        if (!arrived || searching) return@LaunchedEffect
+        speaker.say(context.getString(R.string.b_say_arrived)) { listenForStart() }
     }
 
     // While searching: listen for open spots in our group
@@ -109,12 +160,13 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         openSpots.filter { it.id !in declined }.minByOrNull { it.metersFromCarB() }
     } else null
 
-    // Speak the offer once, when it first appears
+    // Speak the offer once, when it first appears; voice answer is wired below (after accept() is defined)
+    var offerToHear by remember { mutableStateOf<Spot?>(null) }
     LaunchedEffect(offer?.id) {
         val o = offer ?: return@LaunchedEffect
         if (o.id !in announced) {
             announced.add(o.id)
-            speaker.say(context.getString(R.string.b_say_offer, o.metersFromCarB()))
+            speaker.say(context.getString(R.string.b_say_offer, o.metersFromCarB())) { offerToHear = o }
         }
     }
 
@@ -149,12 +201,43 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
         }
     }
 
+    // B3 voice answer: "네" -> accept, "아니요" -> next spot, not understood -> ask once more
+    fun hearOffer(o: Spot, retry: Boolean) {
+        listenOnce { a, _ ->
+            if (accepted != null || o.id in declined) return@listenOnce
+            when (a) {
+                VoiceInput.Answer.YES -> accept(o)
+                VoiceInput.Answer.NO -> {
+                    declined.add(o.id); refused = true
+                    speaker.say(context.getString(R.string.b_say_ok_other))
+                }
+                VoiceInput.Answer.UNKNOWN -> if (retry) speaker.say(context.getString(R.string.b_say_retry)) { hearOffer(o, false) }
+            }
+        }
+    }
+    LaunchedEffect(offerToHear?.id) {
+        val o = offerToHear ?: return@LaunchedEffect
+        hearOffer(o, retry = true)
+    }
+
     fun parkNow(acc: Spot) {
+        lastLeavingCar = acc.leavingCar
         repo.markTaken(acc)
         speaker.say(context.getString(R.string.b_say_parked))
         accepted = null
         searching = false
         parked = true
+    }
+
+    // Car B's own car signals: parking brake set / gear into P while a spot is reserved -> parked
+    DisposableEffect(Unit) {
+        ownSignals.start(object : CarSignals.Listener {
+            override fun onDoorOpenedAndClosed() = Unit
+            override fun onNavigationSet() = Unit
+            override fun onParkingBrakeReleased() = Unit
+            override fun onParked() { accepted?.let { if (!parked) parkNow(it) } }
+        })
+        onDispose { ownSignals.stop() }
     }
 
     val acc = accepted
@@ -169,10 +252,10 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     Spacer(Modifier.height(12.dp))
                     SubText(stringResource(R.string.b_parked_sub), center = true)
                     Spacer(Modifier.height(44.dp))
-                    // TODO(zol): send the thanks to Car A (not stored anywhere yet)
+                    // "고마워요" is stored on the leaving car's credits document (field "thanks")
                     Row(
                         Modifier.clip(NsCar.shape).background(NsCar.cardHigh)
-                            .clickableBox { thanked = true }.padding(horizontal = 48.dp, vertical = 30.dp),
+                            .clickableBox { if (!thanked) lastLeavingCar?.let { repo.sendThanks(it) }; thanked = true }.padding(horizontal = 48.dp, vertical = 30.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
@@ -193,7 +276,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     HintRow(stringResource(R.string.b_hint_auto))
                 }
                 // Simulator: stands in for Car B's own parking brake signal.
-                // TODO: in the real car, finish when Car B's parking brake is set (CarSignals / Pleos Vehicle SDK) - no button.
+                // Real car: ownSignals.onParked (Pleos Vehicle SDK: parking brake set / gear into P) finishes by itself.
                 Box(Modifier.align(Alignment.BottomEnd)) { SimButton(stringResource(R.string.b_sim_brake)) { parkNow(acc) } }
             }
 
@@ -220,10 +303,10 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                         }
                     }
                     Spacer(Modifier.height(20.dp))
-                    // TODO(zol): releasing the matched spot is not in SpotRepository yet; for now this only leaves the screen state
+                    // "다른 자리 찾기": the reserved spot goes back to the open list for other cars
                     Box(
                         Modifier.fillMaxWidth().clip(NsCar.shape).background(NsCar.cardHigh)
-                            .clickableBox { declined.add(acc.id); accepted = null; refused = false; searchNote = context.getString(R.string.b_note_other) }
+                            .clickableBox { repo.release(acc.id, CAR_B_ID); declined.add(acc.id); accepted = null; refused = false; searchNote = context.getString(R.string.b_note_other) }
                             .padding(vertical = 34.dp),
                         contentAlignment = Alignment.Center,
                     ) { Text(stringResource(R.string.b_other_spot), style = NsType.button.copy(fontSize = 32.sp), color = NsCar.text) }
@@ -265,13 +348,12 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                     Spacer(Modifier.height(28.dp))
                     // voice first: the big card asks for the voice, touch is the small underlined text below
-                    // TODO(zol): connect Platform.voiceInput(context).listen(...) here -
-                    //   YES -> accept(offer), NO -> declined.add(offer.id) + refused = true,
-                    //   UNKNOWN -> ask again; start listening after the TTS offer ends
+                    // voice: hearOffer() listens after the spoken offer ends ("네" / "아니요")
                     // no extra card here: the voice prompt stands free, the only card is the info above
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         CenterColumn {
-                            MicBadge()
+                            MicBadge(Modifier.clickable { hearOffer(offer, retry = false) })
+                            VoiceStatus(listening, voiceNote)
                             Text(stringResource(R.string.b_voice_q), style = NsType.logo.copy(fontSize = 46.sp, lineHeight = 56.sp), color = NsCar.text)
                             Spacer(Modifier.height(12.dp))
                             SubText(stringResource(R.string.b_voice_sub), center = true)
@@ -304,10 +386,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
 
             // B1 start offer: voice "자리 찾아줘", tap is the quiet alternative
             arrived -> {
-                // TODO: in the real car this screen comes from the NaviHelper arrival event:
-                //   Platform.carContext(context).start(onNearDestination = { arrived = true }, onPosition = { _, _ -> })
-                //   (pleos threshold is NEAR_DESTINATION_M = 500)
-                // TODO(zol): voice start - the driver says "자리 찾아줘" -> searching = true (needs the keyword in VoiceInput.listen)
+                // Real car: carContext (Pleos NaviHelper) opens this screen < 500 m before the destination,
+                // then the app asks by voice and listens for "자리 찾아줘" (see LaunchedEffect(arrived) above).
                 Column(Modifier.fillMaxSize()) {
                     Spacer(Modifier.weight(1f))
                     // the distance line sits right on top of the mic card
@@ -321,7 +401,8 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                     CarBox(pad = 36.dp) {   // height follows the content, so nothing is cut off
                         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            MicBadge()
+                            MicBadge(Modifier.clickable { listenForStart() })
+                            VoiceStatus(listening, voiceNote)
                             Text(stringResource(R.string.b_say_find), style = NsType.logo.copy(fontSize = 58.sp, lineHeight = 68.sp), color = NsCar.text)
                             Spacer(Modifier.height(10.dp))
                             SubText(stringResource(R.string.b_say_find_sub), center = true)
@@ -329,10 +410,7 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
                     }
                     Spacer(Modifier.weight(1f))
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextLink(stringResource(R.string.b_tap_start), {
-                            searching = true
-                            speaker.say(context.getString(R.string.b_say_start))
-                        })
+                        TextLink(stringResource(if (listening) R.string.b_tap_start_listening else R.string.b_tap_start), { startSearch() })
                     }
                 }
             }
@@ -353,3 +431,18 @@ fun CarBScreen(speaker: Speaker, onBack: () -> Unit) {
 
 private fun Modifier.clickableBox(onClick: () -> Unit): Modifier =
     this.clickable(onClick = onClick)
+
+/** Small line under the mic: "listening", what was heard, or why the mic can't be used. Tap the mic to listen again. */
+@Composable
+private fun VoiceStatus(listening: Boolean, note: String?) {
+    Text(
+        when {
+            listening -> stringResource(R.string.b_listening_now)
+            note != null -> note
+            else -> stringResource(R.string.b_tap_mic)
+        },
+        style = NsType.bodyBold.copy(fontSize = 24.sp),
+        color = if (listening) NsCar.accent else NsCar.text2,
+        modifier = Modifier.padding(bottom = 16.dp),
+    )
+}
